@@ -25,6 +25,7 @@ pnpm check        # typecheck + tests, run before every commit
 | Script | What it does |
 | --- | --- |
 | `pnpm dev` | **No camera needed:** fake DDPAI camera + server in one process, `--watch`. Flags: `--no-fix`, `--speed <km/h>`, `--drop-every <s>`, `--port`, `--log-level` |
+| `pnpm dev:fake-camera` + `pnpm dev:server` | Same in two terminals: fake camera (logs connections and API calls) and a server connected to it (`127.0.0.1:6100`, API `:8080`), `--watch` |
 | `pnpm dev:camera` | Real camera (default config), `--watch` |
 | `pnpm start -- <flags>` | Run once (e.g. `pnpm start -- --log-level debug`) |
 | `pnpm simulate` | Run with the simulator source |

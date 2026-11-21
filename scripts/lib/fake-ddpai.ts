@@ -24,8 +24,10 @@ export interface FakeDdpaiOptions {
   noFix?: boolean;
   gpsIntervalMs?: number;
   gsensorIntervalMs?: number;
-  /** Send an unknown message type this often (0 = never), to exercise event passthrough. */
+  /** Send a made-up message type this often (default 0 = never), to exercise event passthrough in tests. */
   eventIntervalMs?: number;
+  /** Called for connections, API requests and a periodic summary (the CLI prints these). */
+  onLog?: (message: string) => void;
 }
 
 export interface FakeDdpai {
@@ -100,22 +102,29 @@ export async function startFakeDdpai(options: FakeDdpaiOptions = {}): Promise<Fa
   const gsensorTimer = setInterval(() => broadcast(gsensorFrame(Date.now())), options.gsensorIntervalMs ?? 62);
   let eventCount = 0;
   const eventTimer =
-    (options.eventIntervalMs ?? 10_000) > 0
+    (options.eventIntervalMs ?? 0) > 0
       ? setInterval(() => {
           eventCount++;
           broadcast(JSON.stringify({ msgid: 'MSG_FakeEvent', data: JSON.stringify({ count: eventCount, note: 'not a real DDPAI message' }) }));
-        }, options.eventIntervalMs ?? 10_000)
+        }, options.eventIntervalMs)
       : undefined;
 
+  const log = options.onLog ?? (() => {});
   const tcp = net.createServer((socket) => {
     sockets.add(socket);
-    socket.on('close', () => sockets.delete(socket));
+    const who = `${socket.remoteAddress}:${socket.remotePort}`;
+    log(`telemetry client connected (${who}), ${sockets.size} connected`);
+    socket.on('close', () => {
+      sockets.delete(socket);
+      log(`telemetry client disconnected (${who}), ${sockets.size} connected`);
+    });
     socket.on('error', () => sockets.delete(socket));
   });
   await new Promise<void>((resolve) => tcp.listen(options.telemetryPort ?? 0, host, resolve));
 
   const api = http.createServer((req, res) => {
     const cmd = new URL(req.url ?? '/', 'http://x').searchParams.get('cmd');
+    log(`api ${req.method} ${cmd ?? req.url}`);
     const reply = (data: unknown) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ errcode: 0, data: JSON.stringify(data) }));

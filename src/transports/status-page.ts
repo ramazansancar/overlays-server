@@ -63,6 +63,13 @@ export function statusPageHtml(): string {
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' })[c]);
   let showPos = false;
+  // The cards are re-rendered every second; remember which "other device info" panels are open.
+  const openDetails = new Set();
+  document.addEventListener('toggle', (e) => {
+    const id = e.target && e.target.dataset ? e.target.dataset.source : undefined;
+    if (id === undefined) return;
+    if (e.target.open) openDetails.add(id); else openDetails.delete(id);
+  }, true);
   $('intro').innerHTML = T.intro;
   $('server-label').textContent = T.server;
   $('repo-label').textContent = T.repo;
@@ -96,7 +103,7 @@ export function statusPageHtml(): string {
       }
       if (st.message) rows.push([T.msg, st.message]);
       const extra = dev && dev.details && Object.keys(dev.details).length
-        ? '<details style="margin-top:8px"><summary class="muted">' + T.details + '</summary><dl>'
+        ? '<details style="margin-top:8px" data-source="' + esc(s.id) + '"' + (openDetails.has(s.id) ? ' open' : '') + '><summary class="muted">' + T.details + '</summary><dl>'
           + Object.entries(dev.details).map(([k, v]) => '<dt>' + esc(k) + '</dt><dd>' + esc(v) + '</dd>').join('') + '</dl></details>'
         : '';
       return '<div class="card"><div class="row"><b>' + esc(s.id) + '</b><span class="muted">' + esc(s.driverName) + '</span>'

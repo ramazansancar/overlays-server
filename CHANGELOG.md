@@ -19,7 +19,8 @@ and the project uses [Semantic Versioning](https://semver.org/).
 - Run from a git clone (`npm start`, `start.cmd`, no build step) or from npm (`npx overlays-server`).
 - Programmatic API (`import { startServer, defineDriver } from 'overlays-server'`).
 - Fake DDPAI camera for development and tests; `pnpm dev` runs the server against it (`--no-fix`, `--speed`,
-  `--drop-every`).
+  `--drop-every`), or in two terminals `pnpm dev:fake-camera` + `pnpm dev:server`. `--ddpai-http-port` flag.
+- Overlay connections and refusals are logged at `info` / `warn`.
 - `--probe <host>`: inspects a device (ports, HTTP/RTSP servers, model/firmware, pushed data samples) and prints a
   Markdown report for new-device issues, with positions, Wi-Fi credentials, serials and MACs masked.
 - Docs: new-device guide, supported devices with a test log, local testing guide; issue forms with commands.

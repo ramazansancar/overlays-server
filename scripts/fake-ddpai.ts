@@ -22,12 +22,20 @@ const { values } = parseArgs({
   },
 });
 
+const time = () => new Date().toLocaleTimeString();
 const fake = await startFakeDdpai({
   telemetryPort: Number(values.port),
   httpPort: Number(values['http-port']),
   noFix: values['no-fix'],
   speedKmh: Number(values.speed),
+  onLog: (m) => console.log(`${time()} ${m}`),
 });
-console.log(`fake DDPAI: telemetry tcp://127.0.0.1:${fake.telemetryPort}, api http://127.0.0.1:${fake.httpPort}`);
+console.log(`fake DDPAI camera: telemetry tcp://127.0.0.1:${fake.telemetryPort}, api http://127.0.0.1:${fake.httpPort}`);
+console.log(`Connect the server from another terminal:  pnpm dev:server`);
 console.log('Ctrl+C to stop.');
+setInterval(() => {
+  const n = fake.clients();
+  console.log(`${time()} ${n ? `streaming GPS + G-sensor to ${n} client(s)` : 'waiting for a client (pnpm dev:server)…'}`);
+}, 10_000).unref();
+await new Promise(() => {}); // keep running until Ctrl+C
 process.on('SIGINT', () => void fake.close().then(() => process.exit(0)));

@@ -206,7 +206,9 @@ aynı ağa giren herkes kameranın görüntüsüne ve ayarlarına erişebilir.
 
 ```bash
 pnpm install
-pnpm dev            # kamerasız geliştirme: sahte DDPAI kamera + sunucu, dosya değişince yeniden başlar
+pnpm dev            # kamerasız geliştirme: sahte DDPAI kamera + sunucu tek terminalde, dosya değişince yeniden başlar
+pnpm dev:fake-camera # ya da iki terminal: 1) sahte kamera (bağlantıları loglar)
+pnpm dev:server     #                     2) ona bağlanan sunucu
 pnpm dev -- --no-fix --speed 90 --drop-every 20   # uydu yok / hız / bağlantı kopma senaryoları
 pnpm dev:camera     # gerçek kamerayla (193.168.0.1), izleme modunda
 pnpm simulate       # simülatör sürücüsüyle

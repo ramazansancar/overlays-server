@@ -45,6 +45,8 @@
   ],
   "scripts": {
     "dev": "node --watch scripts/dev.ts",
+    "dev:fake-camera": "node scripts/fake-ddpai.ts",
+    "dev:server": "node --watch scripts/dev.ts --external",
     "dev:camera": "node --watch src/cli.ts",
     "start": "node src/cli.ts",
     "simulate": "node src/cli.ts --simulate",

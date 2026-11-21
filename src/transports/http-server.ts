@@ -92,7 +92,7 @@ export function createHttpServer(options: HttpServerOptions): { server: http.Ser
     };
     req.on('close', cleanup);
     res.on('error', cleanup);
-    log.debug(`sse client connected (${req.headers.origin ?? 'no origin'}, source=${feedOptions.subscription})`);
+    log.info(`overlay connected via SSE (${req.headers.origin ?? 'no origin'}, source=${feedOptions.subscription})`);
   };
 
   const server = http.createServer((req, res) => {
@@ -140,7 +140,7 @@ export function createHttpServer(options: HttpServerOptions): { server: http.Ser
   server.on('upgrade', (req: IncomingMessage, socket: Duplex, head: Buffer) => {
     const url = new URL(req.url ?? '/', 'http://localhost');
     const reject = (status: number, reason: string) => {
-      log.debug(`refused websocket: ${reason}`);
+      log.warn(`refused an overlay connection: ${reason}`);
       socket.end(`HTTP/1.1 ${status} ${http.STATUS_CODES[status] ?? ''}\r\nConnection: close\r\nContent-Length: 0\r\n\r\n`);
     };
     if (url.pathname !== '/v1/ws') return reject(404, `no websocket at ${url.pathname}`);
@@ -164,10 +164,11 @@ export function createHttpServer(options: HttpServerOptions): { server: http.Ser
       ws.on('close', () => {
         clearInterval(heartbeat);
         close();
+        log.info(`overlay disconnected (${req.headers.origin ?? 'no origin'})`);
       });
       ws.on('error', (err) => log.debug(`websocket error: ${err.message}`));
       // Clients have nothing to say yet; messages are ignored (reserved for future commands).
-      log.debug(`websocket client connected (${req.headers.origin ?? 'no origin'}, source=${feedOptions.subscription})`);
+      log.info(`overlay connected (${req.headers.origin ?? 'no origin'}, source=${feedOptions.subscription})`);
     });
   });
 

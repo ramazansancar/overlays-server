@@ -21,6 +21,7 @@ Options:
       --origin <origin>    Extra allowed web origin (repeatable), e.g. https://example.com
       --token <secret>     Require ?token=<secret> from clients
       --ddpai-host <ip>    DDPAI camera address (default 193.168.0.1)
+      --ddpai-http-port <port>  DDPAI HTTP API port (default 80)
       --simulate           Use the built-in simulator instead of the configured sources
       --log-level <level>  ${LOG_LEVELS.join(' | ')} (default info)
       --print-config       Print the effective config and exit
@@ -49,6 +50,7 @@ function parseCli() {
       origin: { type: 'string', multiple: true },
       token: { type: 'string' },
       'ddpai-host': { type: 'string' },
+      'ddpai-http-port': { type: 'string' },
       simulate: { type: 'boolean' },
       'log-level': { type: 'string' },
       'print-config': { type: 'boolean' },
@@ -82,10 +84,16 @@ function buildConfig(args: CliValues, warn: (m: string) => void): { config: AppC
   if (args.simulate) {
     config.sources = [{ id: 'simulator', driver: 'simulator', enabled: true, options: {} }];
   }
-  if (args['ddpai-host']) {
+  if (args['ddpai-host'] || args['ddpai-http-port']) {
     const ddpai = config.sources.filter((s) => s.driver === 'ddpai');
-    if (ddpai.length === 0) throw new ConfigError('--ddpai-host given but no ddpai source is configured');
-    for (const s of ddpai) s.options = { ...s.options, host: args['ddpai-host'] };
+    if (ddpai.length === 0) throw new ConfigError('--ddpai-host / --ddpai-http-port given but no ddpai source is configured');
+    for (const s of ddpai) {
+      s.options = {
+        ...s.options,
+        ...(args['ddpai-host'] && { host: args['ddpai-host'] }),
+        ...(args['ddpai-http-port'] && { httpPort: args['ddpai-http-port'] }),
+      };
+    }
   }
   return { config, file };
 }

@@ -16,7 +16,17 @@ pnpm check            # TypeScript 7 tip kontrolü + tüm testler (gerçek sunuc
 pnpm dev              # sahte DDPAI kamera + sunucu, http://127.0.0.1:3456
 ```
 
-Durum sayfası: <http://127.0.0.1:3456>. Senaryolar (her biri ayrı çalıştırılır):
+Ya da **iki terminalde** (sahte kameranın ne yaptığını ayrı görmek için):
+
+```bash
+pnpm dev:fake-camera     # 1. terminal: sahte kamera 127.0.0.1:6100 (API :8080); bağlantıları ve istekleri yazar
+pnpm dev:server          # 2. terminal: sunucu, 1. terminaldeki kameraya bağlanır
+```
+
+1. terminalde `telemetry client connected`, 2. terminalde `ddpai: link online` ve `ddpai: gps fix` görmelisin.
+Overlay bağlanınca 2. terminal `overlay connected (http://localhost:5173 ...)` yazar.
+
+Durum sayfası: <http://127.0.0.1:3456>. Senaryolar (her biri ayrı çalıştırılır, tek terminal modu):
 
 ```bash
 pnpm dev -- --no-fix            # kamera uydu arıyor (gps: no_fix)
@@ -51,7 +61,7 @@ curl -i -H "Host: evil.example" http://127.0.0.1:3456/v1/state
 Probe aracını sahte kameraya karşı denemek (iki terminal):
 
 ```bash
-pnpm fake-ddpai                                                  # 1. terminal: 127.0.0.1:6100 + API :8080
+pnpm dev:fake-camera                                             # 1. terminal: 127.0.0.1:6100 + API :8080
 node src/cli.ts --probe 127.0.0.1 --probe-ports 6100,8080        # 2. terminal
 ```
 
@@ -60,7 +70,7 @@ node src/cli.ts --probe 127.0.0.1 --probe-ports 6100,8080        # 2. terminal
 İki terminal:
 
 ```bash
-# 1. terminal: sunucu + sahte kamera
+# 1. terminal: sunucu + sahte kamera (tek süreç)
 cd overlays-server
 pnpm dev
 

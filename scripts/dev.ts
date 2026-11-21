@@ -8,6 +8,10 @@
  *   pnpm dev -- --drop-every 20       # drop the camera connection every 20 s (reconnect testing)
  *   pnpm dev -- --port 3457 --log-level debug
  *
+ * Two terminals instead (fake camera output visible on its own):
+ *   pnpm dev:fake-camera              # terminal 1: fake camera on 127.0.0.1:6100 (+ API :8080)
+ *   pnpm dev:server                   # terminal 2: server connected to it (= pnpm dev -- --external)
+ *
  * Use `pnpm dev:camera` for the real camera.
  */
 import { parseArgs } from 'node:util';
@@ -30,15 +34,24 @@ const { values } = parseArgs({
     lat: { type: 'string' },
     lon: { type: 'string' },
     'drop-every': { type: 'string' },
+    external: { type: 'boolean', default: false },
+    'camera-host': { type: 'string', default: '127.0.0.1' },
+    'camera-port': { type: 'string', default: '6100' },
+    'camera-http-port': { type: 'string', default: '8080' },
   },
 });
 
-const fake = await startFakeDdpai({
-  noFix: values['no-fix'],
-  speedKmh: Number(values.speed),
-  ...(values.lat && { lat: Number(values.lat) }),
-  ...(values.lon && { lon: Number(values.lon) }),
-});
+const fake = values.external
+  ? undefined
+  : await startFakeDdpai({
+      noFix: values['no-fix'],
+      speedKmh: Number(values.speed),
+      ...(values.lat && { lat: Number(values.lat) }),
+      ...(values.lon && { lon: Number(values.lon) }),
+    });
+const camera = fake
+  ? { host: '127.0.0.1', telemetryPort: fake.telemetryPort, httpPort: fake.httpPort }
+  : { host: values['camera-host'], telemetryPort: Number(values['camera-port']), httpPort: Number(values['camera-http-port']) };
 
 const config = parseConfig({
   port: values.port,
@@ -47,18 +60,22 @@ const config = parseConfig({
     {
       id: 'ddpai',
       driver: 'ddpai',
-      options: { host: '127.0.0.1', telemetryPort: fake.telemetryPort, httpPort: fake.httpPort, idleTimeoutMs: 3000 },
+      options: { ...camera, idleTimeoutMs: 3000 },
     },
   ],
 });
 const log = createLogger(config.logLevel);
-log.info(`fake DDPAI camera on tcp://127.0.0.1:${fake.telemetryPort} (api :${fake.httpPort})`);
+log.info(
+  fake
+    ? `built-in fake DDPAI camera on tcp://127.0.0.1:${fake.telemetryPort} (api :${fake.httpPort})`
+    : `using the camera at tcp://${camera.host}:${camera.telemetryPort} (api :${camera.httpPort}); start it with: pnpm dev:fake-camera`,
+);
 
 const server = await startServer({ config, log });
 log.info(`status page:   ${server.url}/`);
 log.info(`overlay feed:  ${server.url.replace(/^http/, 'ws')}/v1/ws`);
 
-if (values['drop-every']) {
+if (values['drop-every'] && fake) {
   const seconds = Number(values['drop-every']);
   setInterval(() => {
     log.info('dev: dropping the camera connection');
@@ -67,7 +84,7 @@ if (values['drop-every']) {
 }
 
 const shutdown = () => {
-  void Promise.all([server.close(), fake.close()]).then(() => process.exit(0));
+  void Promise.all([server.close(), fake?.close()]).then(() => process.exit(0));
   setTimeout(() => process.exit(1), 3000).unref();
 };
 process.on('SIGINT', shutdown);
