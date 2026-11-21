@@ -181,7 +181,8 @@ gösterip Google Maps / Yandex / OpenStreetMap'te açabilirsin.
 dosyası verir: cihazdan gelen son ~2 dakikalık ham veri, son log satırları, ayarlar ve durum. Bu dosyayla sorunu
 kendi bilgisayarımızda aynen tekrar oynatıp düzeltebiliyoruz. Wi-Fi şifresi, seri numarası ve MAC adresleri her zaman
 gizlenir; konum yalnızca **Konumu dahil et** işaretliyse eklenir (harita/konum sorunlarında gerekli). Komut satırından:
-`curl.exe -o tani.json http://127.0.0.1:3456/v1/diagnostics`.
+`curl.exe -o tani.json http://127.0.0.1:3456/v1/diagnostics`. Aynı dosya overlay ayar sayfasından da (konum kaynağı
+*Araç kamerası GPS — overlays-server [yerel]* seçiliyken **Tanı verisini indir**) tarihli adla indirilebilir.
 
 **Durum sayfasında `connecting` / "is this PC connected to the camera Wi-Fi?"** — Bilgisayar kameranın Wi-Fi'ına
 bağlı değil ya da Windows `193.168.0.1`'i yanlış arayüze yolluyor. [docs/windows-network.md](docs/windows-network.md).

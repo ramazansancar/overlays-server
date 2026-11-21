@@ -28,8 +28,9 @@ In scope:
 - **Last position on disk.** To survive restarts while GPS is lost, the last position of each source is kept in the
   user's own profile folder (`last-position.json`, `rememberLastPosition: false` turns it off). Nothing else is stored.
 - **Read-only towards devices.** Drivers never send commands that change device settings.
-- **Secrets from devices.** DDPAI's `API_GetBaseInfo` returns the Wi-Fi password in plain text. Only model and
-  firmware are kept; the raw reply is never logged or forwarded.
+- **Secrets from devices.** DDPAI's `API_GetBaseInfo` returns the Wi-Fi password, serial numbers and MAC
+  addresses in plain text. Those fields are dropped by name; only non-secret fields (model, firmware, memory card, ...)
+  are kept, and the raw reply is never logged or forwarded.
 
 Out of scope:
 
