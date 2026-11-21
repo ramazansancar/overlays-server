@@ -247,7 +247,14 @@ Katkılar memnuniyetle karşılanır. Özellikle **farklı kamera modelleriyle t
 
 ## Lisans
 
-[MIT](LICENSE) © Ramazan Sancar. DDPAI, DDPAI Technology Co., Ltd.'nin markasıdır; bu proje onlarla bağlantılı değildir.
+[GNU AGPL-3.0](LICENSE) (veya sonraki sürümleri) © 2026 Ramazan Sancar.
+
+Kısaca: ücretsiz kullanabilir, değiştirebilir, ticari işlerde de kullanabilirsin. Ama değiştirilmiş bir sürümü
+**dağıtırsan** (paket, exe, kurulum) **ya da ağ üzerinden başkalarına hizmet olarak sunarsan**, o sürümün kaynak kodunu
+da aynı lisansla açmak zorundasın. Durum sayfasındaki kaynak kod linkini kendi kaynağını gösterecek şekilde koru.
+Bağlayıcı olan [LICENSE](LICENSE) metnidir.
+
+DDPAI, DDPAI Technology Co., Ltd.'nin markasıdır; bu proje onlarla bağlantılı değildir.
 
 ---
 
@@ -291,4 +298,6 @@ Security: listens on loopback only, origin allowlist, Host header check, read-on
 never forwards the Wi-Fi password the camera reports. See [SECURITY.md](SECURITY.md).
 
 Contributions welcome, especially test reports from other camera models: [CONTRIBUTING.md](CONTRIBUTING.md).
-License: [MIT](LICENSE). DDPAI is a trademark of its owner; this project is not affiliated with it.
+License: [GNU AGPL-3.0-or-later](LICENSE). Free to use, modify and use commercially; if you distribute a modified
+version or offer it to others over a network, you must publish its source under the same license (keep the status
+page's source link pointing to your code). DDPAI is a trademark of its owner; this project is not affiliated with it.

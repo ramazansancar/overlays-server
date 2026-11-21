@@ -2,7 +2,7 @@
   "name": "overlays-server",
   "version": "0.1.0",
   "description": "Local telemetry bridge for stream overlays: reads live GPS from dashcams (DDPAI, ...) and serves it to browser-source overlays over WebSocket / SSE.",
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "author": "Ramazan Sancar",
   "homepage": "https://github.com/ramazansancar/overlays-server#readme",
   "repository": {

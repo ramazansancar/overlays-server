@@ -111,6 +111,11 @@ camera reproduces the N5 Pro's checksum quirk, for example).
 3. Publish to npm by hand: `npm publish` (`prepublishOnly` runs the checks and the build first). No npm token is
    stored in the repository or in CI.
 
+## License of contributions
+
+The project is licensed under the [GNU AGPL-3.0-or-later](LICENSE). By sending a contribution you agree that it is
+published under the same license.
+
 ## Code of conduct
 
 Be kind and constructive. See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).

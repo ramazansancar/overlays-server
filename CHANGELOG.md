@@ -5,6 +5,11 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- License: MIT → **GNU AGPL-3.0-or-later**. Modified versions that are distributed or offered over a network must
+  publish their source under the same license. (Copies obtained before this change keep their MIT terms.)
+
 ### Added
 
 - Local bridge server: WebSocket (`/v1/ws`), Server-Sent Events (`/v1/stream`), JSON state (`/v1/state`),

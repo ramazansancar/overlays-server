@@ -50,7 +50,7 @@ export function statusPageHtml(): string {
       <label class="check"><input type="checkbox" id="diag-pos"> <span id="diag-pos-label"></span></label>
     </div>
   </div>
-  <footer class="muted"><span id="repo-label"></span> <a href="${REPO_URL}" target="_blank" rel="noopener noreferrer">${REPO_URL.replace('https://', '')}</a></footer>
+  <footer class="muted"><span id="repo-label"></span> <a href="${REPO_URL}" target="_blank" rel="noopener noreferrer">${REPO_URL.replace('https://', '')}</a> · AGPL-3.0</footer>
 </main>
 <script>
 (() => {
