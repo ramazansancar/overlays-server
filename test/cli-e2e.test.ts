@@ -160,10 +160,12 @@ describe('start.cmd (Windows)', { skip: process.platform !== 'win32' && 'Windows
     const base = fs.mkdtempSync(path.join(os.tmpdir(), 'ovs-start-'));
     try {
       const git = (cwd: string, ...a: string[]) => execFileSync('git', a, { cwd, stdio: 'pipe' });
-      git(base, 'clone', '-q', ROOT, 'origin');
-      git(base, 'clone', '-q', path.join(base, 'origin'), 'streamer');
       const origin = path.join(base, 'origin');
       const streamer = path.join(base, 'streamer');
+      git(base, 'clone', '-q', ROOT, 'origin');
+      // CI checks pull requests out on a detached HEAD; the streamer's clone must be on a branch to pull.
+      git(origin, 'checkout', '-q', '-B', 'master');
+      git(base, 'clone', '-q', origin, 'streamer');
       // Offline: reuse this checkout's dependencies instead of npm install.
       fs.symlinkSync(path.join(ROOT, 'node_modules'), path.join(streamer, 'node_modules'), 'junction');
 
