@@ -1,0 +1,14 @@
+node_modules/
+dist/
+*.log
+*.tgz
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Local config and recordings can contain your location or secrets.
+overlays-server.config.json
+recordings/
+.env
+.env.*
