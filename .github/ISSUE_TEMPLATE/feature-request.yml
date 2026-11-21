@@ -1,0 +1,14 @@
+name: Feature request / Özellik isteği
+description: Suggest an idea or a new device to support.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve? / Hangi sorunu çözer?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Proposed solution / Önerilen çözüm

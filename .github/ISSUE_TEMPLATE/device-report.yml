@@ -1,0 +1,44 @@
+name: Device report / Cihaz test sonucu
+description: Tried overlays-server with a camera or GPS device? Tell us how it went.
+labels: [device]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks! Reports from other models are how new devices get supported.
+        **Remove real coordinates, Wi-Fi names, passwords, serial numbers and MAC addresses.**
+  - type: input
+    id: device
+    attributes:
+      label: Device model / Cihaz modeli
+      placeholder: DDPAI Z50
+    validations:
+      required: true
+  - type: input
+    id: firmware
+    attributes:
+      label: Firmware version
+      description: Shown on the status page (http://127.0.0.1:3456) when device info is available.
+    validations:
+      required: true
+  - type: dropdown
+    id: result
+    attributes:
+      label: Result / Sonuç
+      options:
+        - Works (fixes arrive) / Çalışıyor
+        - Connects, but no fix / Bağlanıyor ama konum yok
+        - Does not connect / Bağlanmıyor
+    validations:
+      required: true
+  - type: textarea
+    id: ports
+    attributes:
+      label: Open ports / Açık portlar
+      description: "Optional. PowerShell: `21,23,80,443,554,6100,8080 | % { \"$_ \" + (Test-NetConnection 193.168.0.1 -Port $_ -WarningAction SilentlyContinue).TcpTestSucceeded }`"
+      render: text
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs (`--log-level debug`), especially `new message type ...` lines
+      render: text

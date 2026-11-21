@@ -1,0 +1,43 @@
+name: Bug report / Hata bildirimi
+description: Something does not work as documented.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Remove real coordinates, Wi-Fi names and passwords from everything you paste.**
+        **Yapıştırdığın her şeyden gerçek koordinatları, Wi-Fi adlarını ve şifreleri sil.**
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened? / Ne oldu?
+      description: What did you expect, what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce / Nasıl tekrarlanır?
+  - type: input
+    id: version
+    attributes:
+      label: overlays-server version (`overlays-server --version`)
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: OS, Node.js version, OBS version
+      placeholder: Windows 11, Node 24.20.0, OBS 33.0.1
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and firmware / Cihaz ve firmware
+      placeholder: DDPAI N5 Pro, v8.0.0.10
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs (`--log-level debug`)
+      render: text
