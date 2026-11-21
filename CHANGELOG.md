@@ -31,7 +31,8 @@ and the project uses [Semantic Versioning](https://semver.org/).
 - Status page is live over WebSocket (`source=*` subscription, new), shows map links (Google Maps, Yandex,
   OpenStreetMap) for the position, and offers a diagnostics download (`/v1/diagnostics`: recent raw device frames,
   logs, config, state; secrets always masked, positions opt-in). The fake camera replays these files
-  (`--replay`). `/health` reports protocol and per-source state; `status` messages carry `driverName`.
+  (`--replay`; files without positions get a dead-reckoned stand-in track from the recorded speed and course, so
+  their GPS frames still parse). `/health` reports protocol and per-source state; `status` messages carry `driverName`.
 - `--probe <host>`: inspects a device (ports, HTTP/RTSP servers, model/firmware, pushed data samples) and prints a
   Markdown report for new-device issues, with positions, Wi-Fi credentials, serials and MACs masked.
 - Docs: new-device guide, supported devices with a test log, local testing guide; issue forms with commands.

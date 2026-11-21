@@ -82,6 +82,16 @@ this.
 - `/current.gpx` (used by older DDPAI models) returns 404 on this firmware.
 - The `doi-lel: 1` header mentioned for some N5 models was not needed.
 
+## Field data (diagnostics, 2026-11-21, N5 Pro v8.0.0.10)
+
+- Two 2-minute captures on the streamer's setup: GPS exactly 1.0 Hz, G-sensor 15.5 Hz, largest gap between messages
+  83 ms, no disconnects, no message types other than GPS and G-sensor (car mostly standing still).
+- 31–35 satellites, HDOP reported as a constant 0.5.
+- Memory card: `sdcapacity` 499939456 on a 512 GB card → KiB confirmed (511.9 GB); free space rose between captures
+  (loop recording deletes old files).
+- GPS (UTC) time was ~8 s ahead of the PC clock, i.e. that PC's clock was behind. Harmless: overlays use their own
+  clock for staleness and only time differences between fixes.
+
 ## Not verified yet
 
 - More than one client on port 6100 at the same time (e.g. with the DDPAI phone app open).

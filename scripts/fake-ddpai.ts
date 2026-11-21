@@ -30,7 +30,9 @@ const replay = values.replay ? loadReplayFrames(values.replay, values['replay-so
 if (replay) {
   const seconds = ((replay.frames.at(-1)!.t - replay.frames[0]!.t) / 1000).toFixed(0);
   console.log(`replaying ${replay.frames.length} frames (${seconds} s, source "${replay.source}") from ${values.replay}`);
-  if (!replay.positionsIncluded) console.log('note: positions were masked in this file, so GPS frames carry no coordinates (no fix).');
+  if (replay.synthesizedPositions > 0) {
+    console.log(`note: positions were masked in this file; ${replay.synthesizedPositions} GPS frames get a stand-in track rebuilt from the recorded speed and course.`);
+  }
 }
 
 const time = () => new Date().toLocaleTimeString();

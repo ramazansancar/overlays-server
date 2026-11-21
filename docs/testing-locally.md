@@ -111,8 +111,10 @@ pnpm dev:fake-camera -- --replay tani.json        # 1. terminal
 pnpm dev:server                                   # 2. terminal
 ```
 
-Birden fazla kaynak varsa: `--replay-source <id>`. Dosya konumsuz alındıysa GPS mesajlarında koordinat yoktur
-(sunucu "uydu aranıyor" görür); konum sorunları için yayıncıdan **Konumu dahil et** ile indirmesini iste.
+Birden fazla kaynak varsa: `--replay-source <id>`. Dosya konumsuz alındıysa koordinatlar maskelidir; tekrar oynatırken
+kayıttaki hız ve yönden Kızılay'dan başlayan temsili bir rota üretilir (zamanlama, hız, yön, uydu, HDOP, rakım ve ivme
+kayıttaki gibi kalır). Gerçek konuma bağlı sorunlarda (yanlış yer, sıçrama) yayıncıdan **Konumu dahil et** ile
+indirmesini iste.
 
 ## 5. npm paketini yayınlamadan denemek
 

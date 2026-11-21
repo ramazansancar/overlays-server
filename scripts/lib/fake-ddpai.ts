@@ -49,7 +49,7 @@ export interface FakeDdpai {
 const pad = (n: number, width: number) => String(Math.floor(n)).padStart(width, '0');
 
 /** Decimal degrees to NMEA `ddmm.mmmm` / `dddmm.mmmm`. */
-function toNmea(value: number, degreeDigits: number): string {
+export function toNmea(value: number, degreeDigits: number): string {
   const abs = Math.abs(value);
   const deg = Math.floor(abs);
   const min = (abs - deg) * 60;

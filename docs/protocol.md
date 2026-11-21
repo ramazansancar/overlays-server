@@ -114,7 +114,8 @@ Overlays use it to tell "server not running" apart from "server running but refu
 A JSON file for bug reports (`Content-Disposition: attachment`): recent raw device frames (`sources[].recentFrames`,
 `{ t, frame }`, ~2000 per source), the last 500 log lines, source snapshots, the effective config (token masked) and
 the runtime. Wi-Fi credentials, serials and MACs are always masked; positions unless `?positions=1`. Needs the token
-when one is configured. Replay it: `pnpm dev:fake-camera -- --replay <file>`.
+when one is configured. Replay it: `pnpm dev:fake-camera -- --replay <file>` (masked positions are replaced by a dead-reckoned stand-in track
+built from the recorded speed and course).
 
 ### `/v1/state`
 

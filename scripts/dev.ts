@@ -46,6 +46,13 @@ const { values } = parseArgs({
 });
 
 const replay = values.replay ? loadReplayFrames(values.replay, values['replay-source']) : undefined;
+if (replay) {
+  const seconds = ((replay.frames.at(-1)!.t - replay.frames[0]!.t) / 1000).toFixed(0);
+  console.log(`replaying ${replay.frames.length} frames (${seconds} s, source "${replay.source}") from ${values.replay}`);
+  if (replay.synthesizedPositions > 0) {
+    console.log(`positions were masked: ${replay.synthesizedPositions} GPS frames get a stand-in track from the recorded speed and course`);
+  }
+}
 const fake = values.external
   ? undefined
   : await startFakeDdpai({

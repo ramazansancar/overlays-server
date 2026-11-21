@@ -136,6 +136,29 @@ describe('diagnostics, health and the all-sources stream', () => {
   });
 });
 
+describe('replay of a file without positions', () => {
+  it('rebuilds a track from speed and course so every GPS frame parses again', async () => {
+    const { fillMaskedPositions } = await import('../scripts/lib/replay.ts');
+    const { gpsFrame } = await import('../scripts/lib/fake-ddpai.ts');
+    const { decodeDdpaiFrame, gpsMessageToFix } = await import('../src/drivers/ddpai/messages.ts');
+    const t0 = Date.UTC(2026, 10, 21, 10, 0, 0);
+    // Northbound at 36 km/h (19.44 kn), one fix per second, then masked like a diagnostics download.
+    const recorded = [0, 1, 2].map((i) => ({
+      t: t0 + i * 1000,
+      frame: redact(gpsFrame(new Date(t0 + i * 1000), { lat: 41, lon: 29 + i * 0.0001, knots: 19.44, course: 0 })),
+    }));
+    assert.ok(recorded.every((f) => f.frame.includes('xxxx')));
+    const { frames, synthesized } = fillMaskedPositions(recorded);
+    assert.equal(synthesized, 3);
+    const fixes = frames.map((f) => gpsMessageToFix(decodeDdpaiFrame(f.frame) as Parameters<typeof gpsMessageToFix>[0]));
+    assert.ok(fixes.every((x) => x !== undefined), 'all frames parse (checksums recomputed)');
+    assert.ok(Math.abs(fixes[0]!.lat - 39.92077) < 0.001, 'starts at the neutral point, not the recorded place');
+    const moved = (fixes[2]!.lat - fixes[0]!.lat) * 111_320;
+    assert.ok(moved > 18 && moved < 22, `moved ~20 m north in 2 s at 36 km/h, got ${moved.toFixed(1)}`);
+    assert.ok(Math.abs(fixes[1]!.speed! - 10) < 0.05);
+  });
+});
+
 describe('redact keepPositions', () => {
   it('keeps coordinates but still removes secrets', () => {
     const text = '{"lat":39.9,"password":"p"} $GPRMC,1,A,3955.0000,N,03250.0000,E';
