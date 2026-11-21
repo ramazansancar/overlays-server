@@ -5,6 +5,13 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Security
+
+- DNS rebinding guard: host names starting with `127.` (e.g. `127.0.0.1.attacker.example`) were treated as loopback;
+  only real IPv4 literals in 127.0.0.0/8 count now.
+- Websites not in `allowedOrigins` no longer get CORS headers on refused requests, so they cannot detect the server.
+- Warning at start when listening on a non-loopback address without a token.
+
 ### Changed
 
 - License: MIT → **GNU AGPL-3.0-or-later**. Modified versions that are distributed or offered over a network must
@@ -12,6 +19,12 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Remote setups (Raspberry Pi, VPN, reverse proxy, public address): `allowedHosts` / `--allowed-host` for proxy host
+  names, built-in TLS (`tls` / `--tls-cert` / `--tls-key`) for HTTPS + WSS; guide in `docs/remote.md`.
+- `--probe` recognises RTSP servers on any port.
+- Test suite: unit, integration, security/attack scenarios, process-level CLI and `start.cmd` tests (`pnpm test`,
+  `pnpm test:coverage`) and status page browser tests with Playwright (`pnpm test:e2e`); CI runs all of them.
+- README in English (`README.md`) and Turkish (`README-tr.md`).
 - Last known position: kept on disk (`rememberLastPosition`, `stateFile`) and sent with `lastKnown: true` to clients
   that connect while GPS is lost (tunnels) or after a restart; the status page marks it.
 - Local bridge server: WebSocket (`/v1/ws`), Server-Sent Events (`/v1/stream`), JSON state (`/v1/state`),

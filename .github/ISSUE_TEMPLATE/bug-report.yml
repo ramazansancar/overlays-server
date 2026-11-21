@@ -11,7 +11,7 @@ body:
         **Remove real coordinates, Wi-Fi names and passwords from everything you paste.**
         **Yapıştırdığın her şeyden gerçek koordinatları, Wi-Fi adlarını ve şifreleri sil.**
 
-        Not sure if it's a bug? Check [Troubleshooting / Sorun giderme](https://github.com/ramazansancar/overlays-server#sorun-giderme) first.
+        Not sure if it's a bug? Check [Troubleshooting](https://github.com/ramazansancar/overlays-server#troubleshooting) / [Sorun giderme](https://github.com/ramazansancar/overlays-server/blob/master/README-tr.md#sorun-giderme) first.
 
         **Please attach a diagnostics file / Lütfen tanı dosyasını ekle:** open http://127.0.0.1:3456 → **Download diagnostics /
         Tanı verisini indir**, then drag the `.json` file into the box below. It holds the last ~2 minutes of raw device data

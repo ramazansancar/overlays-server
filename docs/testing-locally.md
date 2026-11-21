@@ -7,8 +7,19 @@ Kamera olmadan tüm zinciri (sahte kamera → overlays-server → harita overlay
 ```bash
 cd overlays-server
 pnpm install
-pnpm check            # TypeScript 7 tip kontrolü + tüm testler (gerçek sunucu, sahte DDPAI kameraya karşı)
+pnpm check            # TypeScript 7 tip kontrolü + tüm Node testleri
+pnpm test:coverage    # aynı testler, dosya başına kapsama raporuyla
+pnpm test:e2e         # durum sayfası tarayıcı testleri (Playwright; yerelde kurulu Chrome'u kullanır)
+pnpm check:all        # hepsi
 ```
+
+| Test dosyaları | Ne doğrular |
+| --- | --- |
+| `test/nmea`, `delimited`, `ddpai`, `hub`, `config`, `units` | Ayrıştırıcılar, cihaz tuhaflıkları, durum makinesi, ayarlar, loglama, simülatör, yeniden bağlanma |
+| `test/server`, `diagnostics`, `last-position`, `app` | Gerçek sunucu + sahte kamera: akış, tanı dosyası, son konum, başlangıç hataları |
+| `test/security-e2e`, `remote` | Saldırılar (yabancı site, DNS rebinding, token, büyük mesaj, yol denemeleri) ve kullanım senaryoları (overlay sitesi, LAN/Pi, ters vekil, TLS) |
+| `test/cli-e2e` | Gerçek `node src/cli.ts` süreci; Windows'ta `start.cmd` (güncelleme yolu dahil, internetsiz) |
+| `e2e/status-page.spec.ts` | Tarayıcıda durum sayfası: canlı veri, XSS denemesi, harita linkleri, tanı indirme, yeniden bağlanma, token, son konum |
 
 ## 2. Sunucu: sahte kamerayla çalıştır
 

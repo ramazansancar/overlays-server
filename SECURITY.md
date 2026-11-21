@@ -23,7 +23,12 @@ In scope:
   use `token` then.
 - **Origin allowlist.** Browsers attach `Origin` to cross-site `fetch`, `EventSource` and WebSocket requests. Anything
   not in `allowedOrigins` gets 403, so a random website open on the streamer's PC cannot read the location.
-- **DNS rebinding.** While bound to loopback, requests whose `Host` is not a loopback name are refused (421).
+- **DNS rebinding.** While bound to loopback, requests whose `Host` is not a loopback name (IPv4 literal in 127/8,
+  `localhost`, `[::1]`) or listed in `allowedHosts` (reverse proxy names) are refused (421).
+- **No CORS for refused sites.** Websites outside `allowedOrigins` get no CORS headers at all, so they cannot read
+  responses or tell that the server exists.
+- **Remote access is opt-in.** Listening on a non-loopback address prints a warning unless a `token` is set; for
+  access from the internet use TLS (`tls` option or a reverse proxy), see [docs/remote.md](docs/remote.md).
 - **Optional token** compared in constant time.
 - **Last position on disk.** To survive restarts while GPS is lost, the last position of each source is kept in the
   user's own profile folder (`last-position.json`, `rememberLastPosition: false` turns it off). Nothing else is stored.

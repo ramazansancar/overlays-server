@@ -101,7 +101,9 @@ camera reproduces the N5 Pro's checksum quirk, for example).
 
 - [Conventional Commits](https://www.conventionalcommits.org): `feat(ddpai): ...`, `fix(hub): ...`, `docs: ...`.
 - One topic per PR; `pnpm check` must pass (CI runs it on Windows and Linux, Node 22 and 24).
-- Update docs and `CHANGELOG.md` (under *Unreleased*) when behaviour or config changes.
+- Update docs and `CHANGELOG.md` (under *Unreleased*) when behaviour or config changes. The README exists in English
+  (`README.md`) and Turkish (`README-tr.md`): change both. New translations: `README-<language>[-<REGION>].md`
+  (e.g. `README-pt-BR.md`) and add it to the language line at the top of every README.
 
 ## Releasing (maintainers)
 
