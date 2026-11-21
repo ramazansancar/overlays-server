@@ -16,6 +16,8 @@ export interface RmcSentence {
   course?: number;
   /** UTC epoch milliseconds, when both date and time are present. */
   timestamp?: number;
+  /** Mode indicator (NMEA 2.3+): A autonomous, D differential, E estimated, N not valid, ... */
+  mode?: string;
 }
 
 export interface GgaSentence {
@@ -25,6 +27,8 @@ export interface GgaSentence {
   hdop?: number;
   /** Meters above mean sea level. */
   altitude?: number;
+  /** Geoid height above the WGS84 ellipsoid, meters. */
+  geoidSeparation?: number;
 }
 
 /**
@@ -137,6 +141,7 @@ export function parseRmc(sentence: string, options?: NmeaParseOptions): RmcSente
   if (latitude === undefined || longitude === undefined) return { valid: false };
   const speedKnots = optionalNumber(knots);
   const cog = optionalNumber(course);
+  const mode = f[12]?.trim();
   return {
     valid: true,
     lat: latitude,
@@ -144,6 +149,7 @@ export function parseRmc(sentence: string, options?: NmeaParseOptions): RmcSente
     ...(speedKnots !== undefined && { speed: speedKnots * KNOT_IN_MS }),
     ...(cog !== undefined && { course: cog }),
     ...(timestamp !== undefined && { timestamp }),
+    ...(mode && /^[A-Z]$/.test(mode) && { mode }),
   };
 }
 
@@ -155,10 +161,12 @@ export function parseGga(sentence: string, options?: NmeaParseOptions): GgaSente
   const satellites = optionalNumber(f[7]);
   const hdop = optionalNumber(f[8]);
   const altitude = optionalNumber(f[9]);
+  const geoidSeparation = optionalNumber(f[11]);
   return {
     quality,
     ...(satellites !== undefined && { satellites }),
     ...(hdop !== undefined && { hdop }),
     ...(altitude !== undefined && { altitude }),
+    ...(geoidSeparation !== undefined && { geoidSeparation }),
   };
 }

@@ -1,5 +1,6 @@
 import type { Hub } from '../core/hub.ts';
 import {
+  eventMessage,
   fixMessage,
   motionMessage,
   PROTOCOL_VERSION,
@@ -14,14 +15,22 @@ export interface FeedOptions {
   subscription: string;
   motion: boolean;
   motionMaxHz: number;
+  /** Pass device events (unknown / extra message types) through. */
+  events: boolean;
 }
 
-/** Reads `?source=` and `?motion=` from a client URL. Returns an error text for unknown sources. */
+const flag = (url: URL, name: string) => ['1', 'true', 'yes'].includes(url.searchParams.get(name) ?? '');
+
+/**
+ * Reads `?source=`, `?motion=1`, `?events=1` and `?all=1` (motion + events) from a client URL.
+ * Returns an error text for unknown sources.
+ */
 export function feedOptionsFromUrl(url: URL, hub: Hub, motionMaxHz: number): FeedOptions | string {
   const subscription = url.searchParams.get('source') || 'auto';
   if (subscription !== 'auto' && !hub.has(subscription)) return `unknown source "${subscription}"`;
-  const motion = ['1', 'true', 'yes'].includes(url.searchParams.get('motion') ?? '');
-  return { subscription, motion: motion && motionMaxHz > 0, motionMaxHz };
+  const all = flag(url, 'all');
+  const motion = all || flag(url, 'motion');
+  return { subscription, motion: motion && motionMaxHz > 0, motionMaxHz, events: all || flag(url, 'events') };
 }
 
 /**
@@ -69,6 +78,12 @@ export function openFeed(
         if (now - lastMotionAt < minMotionGapMs || !canSendOptional()) break;
         lastMotionAt = now;
         send(motionMessage(event.source, event.sample));
+        break;
+      }
+      case 'event': {
+        if (!options.events) break;
+        if (!follows(event.source, hub.activeGpsSource === event.source) && options.subscription !== 'auto') break;
+        send(eventMessage(event.source, event.event));
         break;
       }
     }

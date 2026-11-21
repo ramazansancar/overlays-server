@@ -14,6 +14,8 @@ Query parameters (WebSocket and SSE):
 | --- | --- | --- |
 | `source` | `auto` | `auto` follows the active GPS source (priority + failover); or a source id to pin one |
 | `motion` | off | `1` to also receive `motion` messages (throttled to `motionMaxHz`) |
+| `events` | off | `1` to also receive raw device `event` messages |
+| `all` | off | `1` = `motion=1&events=1` |
 | `token` | — | Required when the server has a `token` configured (or send `Authorization: Bearer`) |
 
 Requests from an `Origin` not in `allowedOrigins` get **403**; WebSocket upgrades are refused the same way.
@@ -48,7 +50,8 @@ Sent for every source right after `hello`, then whenever a source's state change
 | `gps` | `unknown` (no data yet), `no_fix` (searching satellites), `fix`, `stale` (fixes stopped) |
 | `active` | this source feeds `source=auto` |
 | `message` | optional human readable detail (English), e.g. the last connection error |
-| `satellites`, `device` | optional |
+| `satellites` | optional, also while searching |
+| `device` | optional: `vendor`, `model`, `firmware`, `storage` (`totalBytes`, `freeBytes`), `cameras`, `streams` (`[{ name, url }]`, RTSP), `details` (other non-secret device fields), `updatedAt`. See [data.md](data.md) |
 | `since` | epoch ms of the last `link`/`gps` change |
 
 ### `fix`
@@ -68,6 +71,9 @@ after the `status` messages, the current fix is repeated if there is one.
 | `heading` | degrees from true north, 0–360 | optional; **left out below ~1.8 km/h** (GPS course is noise when standing still) |
 | `altitude` | meters above mean sea level | optional |
 | `satellites`, `hdop` | — | optional |
+| `quality` | — | optional, GGA fix quality (1 GPS, 2 DGPS, ...) |
+| `geoidSeparation` | meters | optional, geoid height above the ellipsoid |
+| `mode` | — | optional, RMC mode (A autonomous, D differential, E estimated) |
 | `timestamp` | epoch ms, UTC | GPS time when the device sends it, otherwise server time |
 
 The field names match the overlay's `Fix` type, so a client can pass a fix through unchanged. Smoothing between
@@ -80,6 +86,22 @@ fixes is the client's job.
 ```
 
 Acceleration in g, device axes (orientation depends on how the camera is mounted). Skipped for slow clients.
+
+### `event` (opt-in)
+
+```json
+{ "type": "event", "source": "ddpai", "name": "MSG_Something", "data": { "...": "as sent by the device" },
+  "timestamp": 1795256586151 }
+```
+
+Any device message the driver does not interpret, passed through untouched (`name` = device message type). Lets
+overlays use new data before the server knows it. The shape of `data` is device specific and not covered by the
+compatibility promise.
+
+### `/v1/state`
+
+Snapshot of every source: `status` (as in the `status` message), `lastFix`, `lastFixAt`, `lastMotion`, `active`.
+Full field list: [data.md](data.md).
 
 ## Client example (browser)
 

@@ -46,14 +46,16 @@ export function statusPageHtml(): string {
     intro: 'Harita overlay ayarlarında konum kaynağı olarak <b>Yerel sunucu</b> seç. Bu sayfa yayında gösterilebilir; koordinatlar gizli.',
     server: 'Overlay adresi:', repo: 'Kaynak kod, hata bildirimi ve kurulum rehberi:', show: 'Konumu göster', hide: 'Konumu gizle', none: 'Kaynak yok.', offline: 'Sunucuya ulaşılamıyor.',
     link: 'Bağlantı', gps: 'GPS', device: 'Cihaz', sats: 'Uydu', pos: 'Konum', speed: 'Hız', heading: 'Yön', alt: 'Rakım',
-    age: 'Son veri', active: 'aktif', msg: 'Not', ago: 'sn önce',
+    age: 'Son veri', active: 'aktif', msg: 'Not', ago: 'sn önce', storage: 'Hafıza kartı', free: 'boş', cameras: 'Kamera',
+    streams: 'RTSP (OBS Ortam Kaynağı)', gforce: 'İvme (g)', details: 'Diğer cihaz bilgileri', quality: 'Fix kalitesi',
     states: { starting:'başlıyor', connecting:'bağlanıyor', online:'bağlı', offline:'koptu', stopped:'durdu',
       unknown:'bilinmiyor', no_fix:'uydu aranıyor', fix:'konum var', stale:'veri durdu' },
   } : {
     intro: 'In the map overlay settings pick <b>Local server</b> as the location source. Safe to show on stream; coordinates are hidden.',
     server: 'Overlay address:', repo: 'Source code, issues and setup guide:', show: 'Show location', hide: 'Hide location', none: 'No sources.', offline: 'Server unreachable.',
     link: 'Link', gps: 'GPS', device: 'Device', sats: 'Satellites', pos: 'Position', speed: 'Speed', heading: 'Heading', alt: 'Altitude',
-    age: 'Last data', active: 'active', msg: 'Note', ago: 's ago',
+    age: 'Last data', active: 'active', msg: 'Note', ago: 's ago', storage: 'Memory card', free: 'free', cameras: 'Cameras',
+    streams: 'RTSP (OBS Media Source)', gforce: 'Acceleration (g)', details: 'Other device info', quality: 'Fix quality',
     states: { starting:'starting', connecting:'connecting', online:'online', offline:'offline', stopped:'stopped',
       unknown:'unknown', no_fix:'searching satellites', fix:'fix', stale:'stale' },
   };
@@ -74,20 +76,33 @@ export function statusPageHtml(): string {
     if (!state.sources.length) { $('sources').innerHTML = '<div class="card">' + T.none + '</div>'; return; }
     $('sources').innerHTML = state.sources.map((s) => {
       const f = s.lastFix, st = s.status, rows = [];
-      if (st.device) rows.push([T.device, [st.device.vendor, st.device.model, st.device.firmware].filter(Boolean).join(' · ')]);
+      const dev = st.device;
+      if (dev) rows.push([T.device, [dev.vendor, dev.model, dev.firmware].filter(Boolean).join(' · ')]);
+      if (dev && dev.storage) {
+        const gb = (b) => (b / 1e9).toFixed(1) + ' GB';
+        rows.push([T.storage, gb(dev.storage.totalBytes) + ' · ' + gb(dev.storage.freeBytes) + ' ' + T.free]);
+      }
+      if (dev && dev.cameras !== undefined) rows.push([T.cameras, dev.cameras]);
+      if (dev && dev.streams) for (const s of dev.streams) rows.push([T.streams + ' ' + s.name, s.url]);
       if (st.satellites !== undefined) rows.push([T.sats, st.satellites]);
+      if (s.lastMotion) rows.push([T.gforce, ['x', 'y', 'z'].map((k) => k + ' ' + s.lastMotion[k].toFixed(2)).join('  ')]);
       if (f) {
         rows.push([T.pos, showPos ? f.lat.toFixed(5) + ', ' + f.lon.toFixed(5) : '•••']);
         if (f.speed !== undefined) rows.push([T.speed, (f.speed * 3.6).toFixed(0) + ' km/h']);
         if (f.heading !== undefined) rows.push([T.heading, f.heading.toFixed(0) + '°']);
         if (f.altitude !== undefined) rows.push([T.alt, f.altitude.toFixed(0) + ' m']);
+        if (f.quality !== undefined) rows.push([T.quality, f.quality + (f.hdop !== undefined ? ' · HDOP ' + f.hdop : '')]);
         rows.push([T.age, Math.max(0, Math.round((Date.now() - s.lastFixAt) / 1000)) + ' ' + T.ago]);
       }
       if (st.message) rows.push([T.msg, st.message]);
+      const extra = dev && dev.details && Object.keys(dev.details).length
+        ? '<details style="margin-top:8px"><summary class="muted">' + T.details + '</summary><dl>'
+          + Object.entries(dev.details).map(([k, v]) => '<dt>' + esc(k) + '</dt><dd>' + esc(v) + '</dd>').join('') + '</dl></details>'
+        : '';
       return '<div class="card"><div class="row"><b>' + esc(s.id) + '</b><span class="muted">' + esc(s.driverName) + '</span>'
         + (s.active ? '<span class="badge ok">' + T.active + '</span>' : '') + '</div>'
         + '<div class="row" style="margin-top:8px">' + T.link + ' ' + badge(st.link) + ' ' + T.gps + ' ' + badge(st.gps) + '</div>'
-        + '<dl>' + rows.map(([k, v]) => '<dt>' + esc(k) + '</dt><dd>' + esc(v) + '</dd>').join('') + '</dl></div>';
+        + '<dl>' + rows.map(([k, v]) => '<dt>' + esc(k) + '</dt><dd>' + esc(v) + '</dd>').join('') + '</dl>' + extra + '</div>';
     }).join('');
   }
 

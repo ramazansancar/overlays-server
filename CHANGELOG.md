@@ -23,3 +23,6 @@ and the project uses [Semantic Versioning](https://semver.org/).
 - `--probe <host>`: inspects a device (ports, HTTP/RTSP servers, model/firmware, pushed data samples) and prints a
   Markdown report for new-device issues, with positions, Wi-Fi credentials, serials and MACs masked.
 - Docs: new-device guide, supported devices with a test log, local testing guide; issue forms with commands.
+- Everything the device offers: fix quality, geoid separation and mode in `fix`; device info with memory card,
+  camera count, RTSP stream URLs and every other non-secret field (re-read every 60 s); unknown device messages as
+  `event` (`?events=1`, `?all=1`); `lastMotion` in `/v1/state`; richer status page. Data catalog: `docs/data.md`.

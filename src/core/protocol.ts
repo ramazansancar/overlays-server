@@ -4,7 +4,7 @@
  * new ones may be added without bumping the version; removing or changing one bumps it.
  */
 import type { SourceSnapshot } from './hub.ts';
-import type { DeviceInfo, GpsFix, GpsState, LinkState, MotionSample } from './types.ts';
+import type { DeviceEvent, DeviceInfo, GpsFix, GpsState, LinkState, MotionSample } from './types.ts';
 
 export const PROTOCOL_VERSION = 1;
 export const SERVER_NAME = 'overlays-server';
@@ -44,7 +44,12 @@ export interface MotionMessage extends MotionSample {
   source: string;
 }
 
-export type ServerMessage = HelloMessage | StatusMessage | FixMessage | MotionMessage;
+export interface EventMessage extends DeviceEvent {
+  type: 'event';
+  source: string;
+}
+
+export type ServerMessage = HelloMessage | StatusMessage | FixMessage | MotionMessage | EventMessage;
 
 export function statusMessage(s: SourceSnapshot): StatusMessage {
   return {
@@ -67,4 +72,8 @@ export function fixMessage(source: string, fix: GpsFix): FixMessage {
 
 export function motionMessage(source: string, sample: MotionSample): MotionMessage {
   return { type: 'motion', source, ...sample };
+}
+
+export function eventMessage(source: string, event: DeviceEvent): EventMessage {
+  return { type: 'event', source, ...event };
 }

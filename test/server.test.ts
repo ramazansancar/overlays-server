@@ -52,7 +52,7 @@ describe('server with a fake DDPAI camera', () => {
   let wsUrl: string;
 
   before(async () => {
-    fake = await startFakeDdpai({ gpsIntervalMs: 100, gsensorIntervalMs: 20 });
+    fake = await startFakeDdpai({ gpsIntervalMs: 100, gsensorIntervalMs: 20, eventIntervalMs: 150 });
     const config = parseConfig({
       port: 0,
       logLevel: 'silent',
@@ -84,11 +84,31 @@ describe('server with a fake DDPAI camera', () => {
     assert.ok(msgs.some((m) => m.type === 'status' && m.link === 'online'));
   });
 
-  it('reports device info without the Wi-Fi password', async () => {
+  it('reports full device info without any secret', async () => {
     const msgs = await collect(wsUrl, ORIGIN, (m) => m.some((x) => x.type === 'status' && x.device !== undefined));
     const status = msgs.find((m) => m.type === 'status' && m.device);
-    assert.deepEqual(status?.type === 'status' && status.device, { vendor: 'DDPAI', model: 'FAKE_Model', firmware: 'v0.0.0.1' });
+    const device = status?.type === 'status' ? status.device : undefined;
+    assert.equal(device?.model, 'FAKE_Model');
+    assert.equal(device?.firmware, 'v0.0.0.1');
+    assert.equal(device?.cameras, 2);
+    assert.equal(device?.streams?.[1]?.url, 'rtsp://127.0.0.1:554/liveRTSP/av5');
+    assert.ok(device?.storage && device.storage.freeBytes < device.storage.totalBytes);
+    assert.equal(device?.details?.adas_type, 2);
     assert.ok(!JSON.stringify(msgs).includes('do-not-leak'));
+  });
+
+  it('passes unknown device messages through as events when asked', async () => {
+    const msgs = await collect(`${wsUrl}?events=1`, ORIGIN, (m) => m.some((x) => x.type === 'event'));
+    const event = msgs.find((m) => m.type === 'event');
+    assert.ok(event?.type === 'event' && event.name === 'MSG_FakeEvent' && event.source === 'cam');
+    assert.equal((event.data as { note: string }).note, 'not a real DDPAI message');
+    const plain = await collect(wsUrl, ORIGIN, (m) => m.filter((x) => x.type === 'fix').length >= 4);
+    assert.ok(!plain.some((m) => m.type === 'event'), 'no events without ?events=1');
+  });
+
+  it('?all=1 sends motion and events', async () => {
+    const msgs = await collect(`${wsUrl}?all=1`, ORIGIN, (m) => m.some((x) => x.type === 'event') && m.some((x) => x.type === 'motion'));
+    assert.ok(msgs.length > 0);
   });
 
   it('sends motion only when asked, throttled', async () => {

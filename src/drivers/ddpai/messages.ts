@@ -73,6 +73,9 @@ export function gpsMessageToFix(msg: Extract<DdpaiMessage, { kind: 'gps' }>, now
     ...(gga?.altitude !== undefined && gga.quality > 0 && { altitude: gga.altitude }),
     ...(gga?.satellites !== undefined && { satellites: gga.satellites }),
     ...(gga?.hdop !== undefined && { hdop: gga.hdop }),
+    ...(gga && gga.quality > 0 && { quality: gga.quality }),
+    ...(gga?.geoidSeparation !== undefined && gga.quality > 0 && { geoidSeparation: gga.geoidSeparation }),
+    ...(rmc.mode !== undefined && { mode: rmc.mode }),
     timestamp: rmc.timestamp ?? now,
   };
 }

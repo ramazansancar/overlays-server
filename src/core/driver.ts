@@ -1,6 +1,6 @@
 import type { Logger } from '../lib/log.ts';
 import type { OptionReader } from '../lib/options.ts';
-import type { Capability, DeviceInfo, GpsFix, LinkState, MotionSample } from './types.ts';
+import type { Capability, DeviceEvent, DeviceInfo, GpsFix, LinkState, MotionSample } from './types.ts';
 
 /**
  * What a running source gets from the server. Drivers only talk to the outside world through this,
@@ -20,6 +20,8 @@ export interface SourceContext {
   /** The device is talking but has no position (no satellite lock yet). */
   publishNoFix(detail?: { satellites?: number; hdop?: number }): void;
   publishMotion(sample: MotionSample): void;
+  /** Any other device message, passed to clients that asked for events. */
+  publishEvent(event: DeviceEvent): void;
 }
 
 /** A running instance of a driver. */

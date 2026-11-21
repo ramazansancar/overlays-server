@@ -69,7 +69,7 @@ describe('nmea', () => {
 
   it('parses GGA', () => {
     const gga = parseGga(withChecksum('GPGGA,102655.00,3955.0000,N,03250.0000,E,1,30,0.5,983.378,M,0.000,M,,'));
-    assert.deepEqual(gga, { quality: 1, satellites: 30, hdop: 0.5, altitude: 983.378 });
+    assert.deepEqual(gga, { quality: 1, satellites: 30, hdop: 0.5, altitude: 983.378, geoidSeparation: 0 });
     const noFix = parseGga(withChecksum('GPGGA,102655.00,,,,,0,03,,,M,,M,,'));
     assert.deepEqual(noFix, { quality: 0, satellites: 3 });
   });

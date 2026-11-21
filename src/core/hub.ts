@@ -1,6 +1,6 @@
 import { silentLogger, type Logger } from '../lib/log.ts';
 import type { SourceContext } from './driver.ts';
-import type { Capability, DeviceInfo, GpsFix, GpsState, LinkState, MotionSample, SourceStatus } from './types.ts';
+import type { Capability, DeviceEvent, DeviceInfo, GpsFix, GpsState, LinkState, MotionSample, SourceStatus } from './types.ts';
 
 export interface SourceInfo {
   id: string;
@@ -14,6 +14,7 @@ export interface SourceSnapshot extends SourceInfo {
   lastFix?: GpsFix;
   /** Server clock when `lastFix` arrived. */
   lastFixAt?: number;
+  lastMotion?: MotionSample;
   /** This source currently feeds the default (`auto`) GPS stream. */
   active: boolean;
 }
@@ -21,7 +22,8 @@ export interface SourceSnapshot extends SourceInfo {
 export type HubEvent =
   | { kind: 'status'; snapshot: SourceSnapshot }
   | { kind: 'fix'; source: string; fix: GpsFix; active: boolean }
-  | { kind: 'motion'; source: string; sample: MotionSample };
+  | { kind: 'motion'; source: string; sample: MotionSample }
+  | { kind: 'event'; source: string; event: DeviceEvent };
 
 export type HubListener = (event: HubEvent) => void;
 
@@ -42,6 +44,7 @@ interface Entry {
   status: SourceStatus;
   lastFix?: GpsFix;
   lastFixAt?: number;
+  lastMotion?: MotionSample;
   abort: AbortController;
 }
 
@@ -85,6 +88,7 @@ export class Hub {
       publishFix: (fix) => this.publishFix(id, fix),
       publishNoFix: (detail) => this.publishNoFix(id, detail),
       publishMotion: (sample) => this.publishMotion(id, sample),
+      publishEvent: (event) => this.publishEvent(id, event),
     };
   }
 
@@ -173,7 +177,14 @@ export class Hub {
     const entry = this.entries.get(id);
     if (!entry || entry.status.link === 'stopped') return;
     if (![sample.x, sample.y, sample.z, sample.timestamp].every(Number.isFinite)) return;
+    entry.lastMotion = sample;
     this.emit({ kind: 'motion', source: id, sample });
+  }
+
+  private publishEvent(id: string, event: DeviceEvent): void {
+    const entry = this.entries.get(id);
+    if (!entry || entry.status.link === 'stopped' || !event.name) return;
+    this.emit({ kind: 'event', source: id, event });
   }
 
   // --- internals ----------------------------------------------------------------------------
@@ -241,6 +252,7 @@ export class Hub {
       ...entry.info,
       status: entry.status,
       ...(entry.lastFix && { lastFix: entry.lastFix, lastFixAt: entry.lastFixAt }),
+      ...(entry.lastMotion && { lastMotion: entry.lastMotion }),
       active: this.activeId === entry.info.id,
     };
   }
@@ -275,5 +287,8 @@ export function normalizeFix(fix: GpsFix): GpsFix | undefined {
   if (finite(fix.altitude)) out.altitude = round(fix.altitude, 1);
   if (finite(fix.satellites) && fix.satellites >= 0) out.satellites = Math.round(fix.satellites);
   if (finite(fix.hdop) && fix.hdop >= 0) out.hdop = round(fix.hdop, 2);
+  if (finite(fix.quality) && fix.quality >= 0) out.quality = Math.round(fix.quality);
+  if (finite(fix.geoidSeparation)) out.geoidSeparation = round(fix.geoidSeparation, 1);
+  if (typeof fix.mode === 'string' && /^[A-Z]$/.test(fix.mode)) out.mode = fix.mode;
   return out;
 }

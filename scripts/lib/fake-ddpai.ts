@@ -24,6 +24,8 @@ export interface FakeDdpaiOptions {
   noFix?: boolean;
   gpsIntervalMs?: number;
   gsensorIntervalMs?: number;
+  /** Send an unknown message type this often (0 = never), to exercise event passthrough. */
+  eventIntervalMs?: number;
 }
 
 export interface FakeDdpai {
@@ -96,6 +98,14 @@ export async function startFakeDdpai(options: FakeDdpaiOptions = {}): Promise<Fa
     broadcast(gpsFrame(new Date(), noFix ? undefined : fix));
   }, options.gpsIntervalMs ?? 1000);
   const gsensorTimer = setInterval(() => broadcast(gsensorFrame(Date.now())), options.gsensorIntervalMs ?? 62);
+  let eventCount = 0;
+  const eventTimer =
+    (options.eventIntervalMs ?? 10_000) > 0
+      ? setInterval(() => {
+          eventCount++;
+          broadcast(JSON.stringify({ msgid: 'MSG_FakeEvent', data: JSON.stringify({ count: eventCount, note: 'not a real DDPAI message' }) }));
+        }, options.eventIntervalMs ?? 10_000)
+      : undefined;
 
   const tcp = net.createServer((socket) => {
     sockets.add(socket);
@@ -111,8 +121,42 @@ export async function startFakeDdpai(options: FakeDdpaiOptions = {}): Promise<Fa
       res.end(JSON.stringify({ errcode: 0, data: JSON.stringify(data) }));
     };
     if (cmd === 'API_GetBaseInfo') {
-      // The real camera also returns its Wi-Fi password here; the driver must never pass it on.
-      return reply({ nickname: 'DDPAI_FAKE_0000', password: 'do-not-leak', model: 'DDPAI FAKE_Model', version: 'v0.0.0.1' });
+      // Same fields as an N5 Pro (values made up). The real camera returns its Wi-Fi password, serials and MACs
+      // here too; the driver must never pass those on.
+      return reply({
+        nickname: 'DDPAI_FAKE_0000',
+        password: 'do-not-leak',
+        ordernum: 'do-not-leak',
+        model: 'DDPAI FAKE_Model',
+        version: 'v0.0.0.1',
+        'mcu version': 53,
+        uuid: 'do-not-leak',
+        sn: 'do-not-leak',
+        macaddr: 'do-not-leak',
+        chipsn: '',
+        btmacaddr: 'do-not-leak',
+        legalret: 1,
+        btnver: 3,
+        totalruntime: 0,
+        sdcapacity: 499939456,
+        sdspare: 57775296,
+        speedLow: 0,
+        sdbrand: '',
+        adas_type: 2,
+        stream_type: 1,
+        preview_enc_type: 0,
+        preview_audio_type: 1,
+        preview_mode: 5,
+        sensor_cnt: 2,
+        rear_picture_in_picture: 2,
+        piRide: 0,
+        down_thread: 1,
+        random: 'do-not-leak',
+        ble: 3,
+        delrec: 1,
+        downstoprec: 1,
+        upgrade_key: 'do-not-leak',
+      });
     }
     if (cmd === 'API_GetGpsState') return reply({ gpsstate: noFix ? 0 : 2, signal: 1 });
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -133,6 +177,7 @@ export async function startFakeDdpai(options: FakeDdpaiOptions = {}): Promise<Fa
     close: async () => {
       clearInterval(gpsTimer);
       clearInterval(gsensorTimer);
+      clearInterval(eventTimer);
       for (const s of sockets) s.destroy();
       api.closeAllConnections();
       await Promise.all([

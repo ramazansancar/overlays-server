@@ -22,9 +22,12 @@ password) and use the camera's API.
 | --- | --- | --- |
 | `host` | `193.168.0.1` | Camera address. Note: DDPAI uses a *public* block, not 192.168.x |
 | `telemetryPort` | `6100` | Live telemetry stream |
-| `httpPort` | `80` | HTTP API (model / firmware, once per connection) |
-| `deviceInfo` | `true` | Read model and firmware |
+| `httpPort` | `80` | HTTP API (device info, read-only) |
+| `rtspPort` | `554` | Used for the RTSP URLs in the device info |
+| `deviceInfo` | `true` | Read device info (model, firmware, memory card, cameras, other fields) |
+| `deviceInfoIntervalMs` | `60000` | Re-read it this often (free space changes while recording); `0` = once per connection |
 | `motion` | `true` | Publish G-sensor samples |
+| `events` | `true` | Pass unknown message types through as events |
 | `idleTimeoutMs` | `6000` | Reconnect when the stream is silent this long (the camera sends ~16 messages/s) |
 
 ```json
@@ -70,8 +73,10 @@ this.
 ### HTTP API notes
 
 - Replies: `{"errcode":0,"data":"<JSON string>"}`. No CORS headers, so browsers cannot call it directly.
-- `API_GetBaseInfo` returns model, firmware, serial numbers, MAC addresses **and the Wi-Fi password in plain text**. The
-  driver keeps only model and firmware and never logs the reply.
+- `API_GetBaseInfo` returns model, firmware, memory card size and free space (`sdcapacity`, `sdspare`, KiB as far as we
+  can tell: 499939456 on a 512 GB card), number of cameras (`sensor_cnt`), ADAS type, preview settings and more, but
+  also serial numbers, MAC addresses, the Wi-Fi name **and the Wi-Fi password in plain text**. The driver publishes
+  everything except those (filtered by field name) and never logs the raw reply. Field list: [data.md](../data.md).
 - `API_GetGpsState` → `{"gpsstate":2,"signal":1}`: lock status only, no coordinates.
 - `API_GpsFileListReq` lists past tracks as 8-minute `.git` (tar of NMEA) files: history only, not live.
 - `/current.gpx` (used by older DDPAI models) returns 404 on this firmware.

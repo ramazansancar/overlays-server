@@ -10,7 +10,9 @@ saniyede bir aktarır. Telefon, bulut servisi ya da RealtimeIRL gerekmez: konum 
 DDPAI kamera (Wi-Fi, 193.168.0.1:6100) ──► overlays-server (127.0.0.1:3456) ──► OBS tarayıcı kaynağı (harita)
 ```
 
-- **Canlı konum, hız, yön, rakım, uydu sayısı** — kameranın kendi GPS'inden, 1 Hz.
+- **Canlı konum, hız, yön, rakım, uydu sayısı, GPS kalitesi** — kameranın kendi GPS'inden, 1 Hz.
+- **Cihazdan alınabilen her şey** — ivme (G-sensör), hafıza kartı doluluğu, kamera sayısı, RTSP adresleri, cihaz
+  bilgileri, tanınmayan mesajlar ham olarak. Overlay istediğini kullanır: [docs/data.md](docs/data.md).
 - **Modüler sürücü yapısı** — yeni kamera / GPS cihazı tek bir modülle eklenir ([docs/drivers.md](docs/drivers.md)).
 - **Kendi kendini onarır** — kamera kapanıp açılsa ya da Wi-Fi kopsa yeniden bağlanır.
 - **Gizlilik öncelikli** — yalnız `127.0.0.1`'i dinler, yalnız izin verilen siteler veriyi okuyabilir.
@@ -162,7 +164,9 @@ Ortam değişkenleri: `OVERLAYS_SERVER_PORT`, `OVERLAYS_SERVER_HOST`, `OVERLAYS_
 | `WS /v1/ws` | Canlı akış (ana kanal) |
 | `GET /v1/stream` | Canlı akış, Server-Sent Events (yedek) |
 
-Akış parametreleri: `source=<id|auto>`, `motion=1`, `token=...`. Mesaj biçimi: [docs/protocol.md](docs/protocol.md).
+Akış parametreleri: `source=<id|auto>`, `motion=1` (ivme), `events=1` (ham cihaz mesajları), `all=1`, `token=...`.
+Mesaj biçimi: [docs/protocol.md](docs/protocol.md). **Hangi veriler var?** (konum, hız, yön, rakım, uydu, HDOP, ivme,
+hafıza kartı, kamera sayısı, RTSP adresleri, cihaz bilgileri, ham olaylar): [docs/data.md](docs/data.md).
 
 ## Sorun giderme
 

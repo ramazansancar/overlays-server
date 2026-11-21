@@ -10,11 +10,17 @@ export interface DdpaiOptions {
   host: string;
   /** Live telemetry stream. */
   telemetryPort: number;
-  /** HTTP API, used once per connection for model / firmware. */
+  /** HTTP API, read-only: model, firmware, memory card, camera count. */
   httpPort: number;
+  /** RTSP port, for the stream URLs in the device info. */
+  rtspPort: number;
   deviceInfo: boolean;
+  /** Re-read the device info this often (memory card free space changes while recording). 0 = once per connection. */
+  deviceInfoIntervalMs: number;
   /** Publish G-sensor samples (~16 Hz). */
   motion: boolean;
+  /** Pass every other message type through as events. */
+  events: boolean;
   /** Reconnect when the stream is silent this long. The camera sends G-sensor data many times a second. */
   idleTimeoutMs: number;
 }
@@ -23,14 +29,17 @@ export const ddpaiDriver = defineDriver<DdpaiOptions>({
   id: 'ddpai',
   name: 'DDPAI dashcam',
   description: 'Live GPS and G-sensor from DDPAI dashcams over their Wi-Fi (TCP 6100). Tested: N5 Pro.',
-  capabilities: ['gps', 'motion', 'device'],
+  capabilities: ['gps', 'motion', 'device', 'events'],
 
   parseOptions: (o) => ({
     host: o.string('host', '193.168.0.1'),
     telemetryPort: o.port('telemetryPort', 6100),
     httpPort: o.port('httpPort', 80),
+    rtspPort: o.port('rtspPort', 554),
     deviceInfo: o.boolean('deviceInfo', true),
+    deviceInfoIntervalMs: o.number('deviceInfoIntervalMs', 60_000, { min: 0, integer: true }),
     motion: o.boolean('motion', true),
+    events: o.boolean('events', true),
     idleTimeoutMs: o.number('idleTimeoutMs', 6000, { min: 0, integer: true }),
   }),
 
@@ -38,11 +47,20 @@ export const ddpaiDriver = defineDriver<DdpaiOptions>({
     const decoder = new DelimitedDecoder({ delimiter: 0x00 });
     const unknownSeen = new Set<string>();
 
+    let infoTimer: NodeJS.Timeout | undefined;
     const loadDeviceInfo = () => {
-      if (!options.deviceInfo) return;
-      fetchDeviceInfo(options.host, options.httpPort, { signal: ctx.signal })
+      if (!options.deviceInfo || ctx.signal.aborted) return;
+      fetchDeviceInfo({ host: options.host, httpPort: options.httpPort, rtspPort: options.rtspPort, signal: ctx.signal })
         .then((info) => ctx.setDevice(info))
         .catch((err) => ctx.log.debug(`device info unavailable: ${errorMessage(err)}`));
+    };
+    const scheduleDeviceInfo = () => {
+      clearInterval(infoTimer);
+      loadDeviceInfo();
+      if (options.deviceInfo && options.deviceInfoIntervalMs > 0) {
+        infoTimer = setInterval(loadDeviceInfo, options.deviceInfoIntervalMs);
+        infoTimer.unref();
+      }
     };
 
     const handleFrame = (frame: string) => {
@@ -62,11 +80,12 @@ export const ddpaiDriver = defineDriver<DdpaiOptions>({
           if (options.motion) ctx.publishMotion(msg.sample);
           break;
         case 'other':
-          // Logged once per type: helps map the rest of the protocol (ADAS, events, ...).
+          // Logged once per type: helps map the rest of the protocol (ADAS, alerts, ...).
           if (!unknownSeen.has(msg.msgid)) {
             unknownSeen.add(msg.msgid);
-            ctx.log.info(`new message type ${msg.msgid}`);
+            ctx.log.info(`new message type ${msg.msgid} (please report it: docs/new-device.md)`);
           }
+          if (options.events) ctx.publishEvent({ name: msg.msgid, data: msg.data, timestamp: Date.now() });
           break;
       }
     };
@@ -79,7 +98,7 @@ export const ddpaiDriver = defineDriver<DdpaiOptions>({
       onConnect: () => {
         decoder.reset();
         ctx.setLink('online');
-        loadDeviceInfo();
+        scheduleDeviceInfo();
       },
       onData: (chunk) => {
         const frames = decoder.push(chunk, (bytes) => ctx.log.warn(`dropped an oversized frame (${bytes} bytes)`));
@@ -88,6 +107,7 @@ export const ddpaiDriver = defineDriver<DdpaiOptions>({
       onDisconnect: (reason, wasConnected) => {
         const target = `${options.host}:${options.telemetryPort}`;
         const hint = wasConnected ? '' : ' (is this PC connected to the camera Wi-Fi?)';
+        clearInterval(infoTimer);
         ctx.setLink(wasConnected ? 'offline' : 'connecting', `${target}: ${reason}${hint}`);
       },
     });
@@ -98,6 +118,7 @@ export const ddpaiDriver = defineDriver<DdpaiOptions>({
         client.start();
       },
       stop() {
+        clearInterval(infoTimer);
         client.stop();
       },
     };

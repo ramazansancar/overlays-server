@@ -13,6 +13,12 @@ export interface GpsFix {
   altitude?: number;
   satellites?: number;
   hdop?: number;
+  /** GGA fix quality: 1 = GPS, 2 = DGPS, 4 = RTK fixed, 5 = RTK float, 6 = dead reckoning. */
+  quality?: number;
+  /** Height of the geoid above the WGS84 ellipsoid (m); altitude + this = ellipsoid height. */
+  geoidSeparation?: number;
+  /** RMC mode: A = autonomous, D = differential, E = estimated, ... */
+  mode?: string;
   /** UTC epoch milliseconds of the fix (GPS time when the device sends it). */
   timestamp: number;
 }
@@ -25,12 +31,28 @@ export interface MotionSample {
   timestamp: number;
 }
 
-/** What the device says about itself. Never put secrets (Wi-Fi passwords, keys) in here. */
+/** A live video stream the device offers (for OBS, not for the browser). */
+export interface DeviceStream {
+  /** `front`, `rear`, ... */
+  name: string;
+  url: string;
+}
+
+/** What the device says about itself. Never put secrets (Wi-Fi passwords, serials, MACs, keys) in here. */
 export interface DeviceInfo {
   vendor?: string;
   model?: string;
   firmware?: string;
   name?: string;
+  /** Memory card. */
+  storage?: { totalBytes: number; freeBytes: number };
+  /** Number of camera sensors (2 = front + rear). */
+  cameras?: number;
+  streams?: DeviceStream[];
+  /** Every other non-secret field the device reports, as is (names are device specific). */
+  details?: Record<string, string | number | boolean>;
+  /** Epoch ms when this was read. */
+  updatedAt?: number;
 }
 
 /** Connection to the device. */
@@ -39,8 +61,19 @@ export type LinkState = 'starting' | 'connecting' | 'online' | 'offline' | 'stop
 /** Position quality, independent of the link. `stale`: fixes were coming but stopped. */
 export type GpsState = 'unknown' | 'no_fix' | 'fix' | 'stale';
 
+/**
+ * Anything else the device pushes (alerts, button presses, unknown message types), passed through untouched so
+ * overlays can use it before the server learns its meaning.
+ */
+export interface DeviceEvent {
+  /** Device specific name, e.g. the DDPAI `msgid`. */
+  name: string;
+  data: unknown;
+  timestamp: number;
+}
+
 /** Kinds of data a driver can publish. */
-export type Capability = 'gps' | 'motion' | 'device';
+export type Capability = 'gps' | 'motion' | 'device' | 'events';
 
 export interface SourceStatus {
   link: LinkState;

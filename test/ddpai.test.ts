@@ -59,9 +59,50 @@ describe('ddpai messages', () => {
     assert.equal(decodeDdpaiFrame('{"msgid":"MSG_GpsData","data":"{}"}'), undefined);
   });
 
-  it('keeps only model and firmware from base info (never the Wi-Fi password)', () => {
-    const info = pickDeviceInfo({ model: 'DDPAI DN2509_Overseas', version: 'v8.0.0.10', password: 'secret', sn: 'X', macaddr: 'Y' });
-    assert.deepEqual(info, { vendor: 'DDPAI', model: 'DN2509_Overseas', firmware: 'v8.0.0.10' });
-    assert.ok(!JSON.stringify(info).includes('secret'));
+  it('turns base info into device info without any secret field', () => {
+    const raw = {
+      model: 'DDPAI DN2509_Overseas',
+      version: 'v8.0.0.10',
+      'mcu version': 53,
+      password: 'secret1',
+      nickname: 'secret2',
+      ordernum: 'secret3',
+      uuid: 'secret4',
+      sn: 'secret5',
+      macaddr: 'secret6',
+      chipsn: 'secret7',
+      btmacaddr: 'secret8',
+      random: 'secret9',
+      upgrade_key: 'secret10',
+      sdcapacity: 499939456,
+      sdspare: 57775296,
+      sensor_cnt: 2,
+      adas_type: 2,
+    };
+    const info = pickDeviceInfo(raw, { host: '193.168.0.1', rtspPort: 554 }, 1000);
+    assert.equal(info.model, 'DN2509_Overseas');
+    assert.equal(info.firmware, 'v8.0.0.10');
+    assert.deepEqual(info.storage, { totalBytes: 499939456 * 1024, freeBytes: 57775296 * 1024 });
+    assert.equal(info.cameras, 2);
+    assert.deepEqual(info.streams, [
+      { name: 'front', url: 'rtsp://193.168.0.1:554/liveRTSP/av4' },
+      { name: 'rear', url: 'rtsp://193.168.0.1:554/liveRTSP/av5' },
+    ]);
+    assert.deepEqual(info.details, { 'mcu version': 53, sdcapacity: 499939456, sdspare: 57775296, sensor_cnt: 2, adas_type: 2 });
+    assert.ok(!/secret/.test(JSON.stringify(info)), JSON.stringify(info));
+  });
+
+  it('lists only the front stream for a single camera and skips storage without a card', () => {
+    const info = pickDeviceInfo({ sensor_cnt: 1, sdcapacity: 0, sdspare: 0 }, { host: '10.0.0.1', rtspPort: 554 });
+    assert.equal(info.streams?.length, 1);
+    assert.equal(info.storage, undefined);
+  });
+
+  it('adds fix quality, geoid separation and mode', () => {
+    const msg = decodeDdpaiFrame(gpsFrame);
+    const fix = gpsMessageToFix(msg as Extract<typeof msg, { kind: 'gps' }> & object)!;
+    assert.equal(fix.quality, 1);
+    assert.equal(fix.geoidSeparation, 0);
+    assert.equal(fix.mode, 'A');
   });
 });

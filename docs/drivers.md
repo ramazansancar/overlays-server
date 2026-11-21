@@ -38,7 +38,7 @@ export const myGpsDriver = defineDriver<MyGpsOptions>({
   id: 'my-gps',                         // value of "driver" in the config
   name: 'My GPS',
   description: 'NMEA over TCP from My GPS devices.',
-  capabilities: ['gps'],                // 'gps' | 'motion' | 'device'
+  capabilities: ['gps'],                // 'gps' | 'motion' | 'device' | 'events'
 
   // Validate the source's "options" object. Throw ConfigError (the reader does) on bad values.
   parseOptions: (o) => ({
@@ -78,6 +78,7 @@ export const myGpsDriver = defineDriver<MyGpsOptions>({
 | `publishFix(fix)` | A valid position. The hub validates, rounds and timestamps it |
 | `publishNoFix(detail?)` | Device talks but has no satellite lock |
 | `publishMotion(sample)` | Acceleration in g |
+| `publishEvent({ name, data, timestamp })` | Anything else the device sends, untouched (unknown message types, alerts) |
 
 Publishing a fix or no-fix also marks the link `online`, so simple drivers don't need to call `setLink` for that.
 
@@ -95,7 +96,8 @@ Publishing a fix or no-fix also marks the link `online`, so simple drivers don't
 - Never throw out of the source; report with `setLink('offline', reason)` and retry with backoff.
 - **Read-only**: don't send commands that change device settings.
 - Convert units at the boundary: m/s, degrees, meters, epoch ms UTC.
-- Log unknown message types once at `info` (helps map protocols), everything else at `debug`.
+- Publish everything the device offers: unknown message types as events (and log each type once at `info`),
+  every non-secret device field under `DeviceInfo.details`. Overlays decide what to use.
 - If the device returns secrets (DDPAI's base info includes the Wi-Fi password), whitelist the fields you keep.
 
 ## Third-party drivers (without forking)
