@@ -93,11 +93,10 @@ gösterir (koordinatlar varsayılan olarak gizli, yayında gösterilebilir).
 1. **Bilgisayarı kameranın Wi-Fi'ına bağla** (`DDPAI_...` ağı). İnternet Ethernet'ten (ör. Superbox) gelmeye devam
    etmeli. Windows ayarı için: [docs/windows-network.md](docs/windows-network.md).
 2. **overlays-server'ı başlat** (yukarıdaki iki yoldan biri). Konsolda `ddpai: link online` ve `ddpai: gps fix` görünür.
-3. **Overlay ayarlarında** harita overlay'inin *Konum kaynağı* olarak **Yerel sunucu**'yu seç, URL'yi OBS
-   tarayıcı kaynağına ekle.
-
-> Overlay sitesindeki **Yerel sunucu** seçeneği overlays-server'ın ilk sürümüyle birlikte yayına alınacak.
-> O zamana kadar akışı durum sayfasından ya da `ws://127.0.0.1:3456/v1/ws` adresine bağlanarak deneyebilirsin.
+3. **[Overlay ayarlarında](https://overlays.ramazansancar.com.tr)** harita overlay'inin *Konum kaynağı* olarak
+   **Araç kamerası GPS — overlays-server [yerel]** seçeneğini seç. Altında açılan *Sunucu adresi* (`127.0.0.1`) ve
+   *Sunucu portu* (`3456`) varsayılan kurulumda olduğu gibi kalabilir; sunucu başka bir portta ya da başka bir
+   cihazda (ör. Raspberry Pi) çalışıyorsa burayı değiştir. Sonra URL'yi OBS tarayıcı kaynağına ekle.
 
 Kamera yoksa sistemi denemek için: `npx overlays-server@latest --simulate` (Ankara'da daire çizen sahte konum).
 
@@ -187,15 +186,24 @@ bağlı değil ya da Windows `193.168.0.1`'i yanlış arayüze yolluyor. [docs/w
 
 **`gps: no_fix`** — Kamera bağlı ama uydu kilidi yok. Açık gökyüzünde birkaç dakika bekle.
 
-**Overlay "Yerel sunucuya bağlanılamadı" diyor, durum sayfası ise çalışıyor** — Tarayıcının *Yerel Ağ Erişimi*
-(Local Network Access) kısıtı:
+**Overlay bir uyarı gösteriyor** — Overlay bağlanamazsa sunucunun `/health` ucuna sorup nedenini yazar:
+
+| Overlay'deki mesaj | Ne yapmalı |
+| --- | --- |
+| *Yerel sunucuya ulaşılamadı* | Sunucu kapalı ya da adres/port yanlış. Durum sayfası açılıyorsa aşağıdaki tarayıcı izni maddesine bak |
+| *Yerel sunucu bu siteye izin vermiyor* | Overlay'i açtığın siteyi `allowedOrigins`'e ekle |
+| *Yerel sunucu açık ama canlı bağlantıyı reddetti* | Sunucuda `token` ayarlı: overlay ayarlarındaki *Sunucu anahtarı* alanına yaz |
+| *Sunucu kameraya bağlanıyor…* / *Kamera uydu arıyor* | Sunucu çalışıyor; sorun kamera tarafında (Wi-Fi, uydu) |
+
+Sunucu da reddettiği her bağlantıyı konsola yazar (`refused an overlay connection: ...`).
+
+**Durum sayfası çalışıyor ama overlay sunucuya ulaşamıyor** — Tarayıcının *Yerel Ağ Erişimi* (Local Network Access)
+kısıtı:
 
 - **OBS 33.0+**: localhost erişimine otomatik izin veriyor. OBS 33 **beta** kullandıysan eski bir ret kalıcı
   kaydedilmiş olabilir: OBS'i kapat, `%APPDATA%\obs-studio\plugin_config\obs-browser` klasörünü sil, OBS'i aç.
   Hâlâ olmuyorsa OBS kısayolunun sonuna `--disable-features=LocalNetworkAccessChecks` ekle.
 - **Chrome / Edge** (ayar sayfası, "Pencerede aç" modu): adres çubuğunda çıkan izin isteğinde **İzin ver** de.
-- Konsolda `refused websocket: origin ... is not in allowedOrigins` görüyorsan overlay'i açtığın siteyi
-  `allowedOrigins`'e ekle.
 
 **`port 3456 is already in use`** — Sunucu zaten açık (ikinci pencere?) ya da port başka programda. `--port` ile değiştir
 ve overlay ayarındaki adresi de güncelle.
@@ -270,7 +278,9 @@ Device not supported yet? Run `npx overlays-server@latest --probe <camera-ip>` a
 
 1. Connect the PC to the camera's Wi-Fi (keep internet on Ethernet; see [docs/windows-network.md](docs/windows-network.md)).
 2. Start overlays-server.
-3. In the overlay settings choose **Local server** as the map's location source.
+3. In the [overlay settings](https://overlays.ramazansancar.com.tr) choose **Dashcam GPS — overlays-server [local]** as
+   the map's location source (server address `127.0.0.1`, port `3456` unless you changed them). If it cannot connect,
+   the overlay tells you why (server down / site not allowed / token needed).
 
 Config file, CLI flags and endpoints are listed in the Turkish sections above (tables are language-neutral).
 Protocol: [docs/protocol.md](docs/protocol.md). Adding a device: [docs/drivers.md](docs/drivers.md).

@@ -60,6 +60,20 @@ start the sources (a failing source is reported, not fatal), and shut everything
   and emits `dist/` for npm.
 - **One runtime dependency** (`ws`): the server is meant to be trusted with location data and run unattended.
 
+## Operations and support
+
+- **Status page** (`/`): live over the same WebSocket as overlays (`source=*` = every source), position hidden by
+  default, map links when shown, device details, RTSP URLs.
+- **`/health`**: cheap liveness + per-source state, no position, no token. Overlays call it when their WebSocket fails
+  to tell "server down" from "refused" (origin / token / host).
+- **Diagnostics** (`/v1/diagnostics`): the hub keeps the last ~2000 raw frames per source (`ctx.recordRaw`) and
+  `recordingLogger` keeps the last 500 log lines; together with config, state and runtime they make one JSON file for
+  bug reports. Secrets always masked (`lib/redact.ts`), positions only on request.
+- **Replay**: the fake DDPAI camera (`scripts/lib/fake-ddpai.ts`) streams a diagnostics file's frames with their
+  original timing, so a streamer's problem runs on a developer machine through the real driver.
+- **Probe** (`--probe <host>`, `src/tools/probe.ts`): read-only device inspection for new-device reports.
+- **Updates**: npm (`npx overlays-server@latest`) or git; `start.cmd` pulls before starting.
+
 ## Possible extensions
 
 - *Proxy mode*: serve the overlay site through the local server so everything is same-origin (no LNA at all).
