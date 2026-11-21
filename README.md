@@ -130,6 +130,8 @@ Varsayılanlar çoğu kurulum için yeterli. Değiştirmek için bir JSON dosyas
 | `gpsPriority` | `[]` | Birden fazla GPS kaynağı varsa tercih sırası (ilk sıradaki koparsa sonrakine geçer) |
 | `motionMaxHz` | `10` | İstemci başına saniyedeki en fazla ivme mesajı |
 | `logLevel` | `info` | `debug`, `info`, `warn`, `error`, `silent` |
+| `rememberLastPosition` | `true` | Son konumu diske yaz; GPS yokken (tünel) ya da yeniden başlatmadan sonra onu göster |
+| `stateFile` | kullanıcı klasöründe `last-position.json` | Son konumun saklandığı dosya |
 | `sources` | `[{ "driver": "ddpai" }]` | Kaynak listesi; her biri `id`, `driver`, `enabled`, `options` |
 
 Sürücü seçenekleri: [docs/devices/ddpai.md](docs/devices/ddpai.md#ayarlar), [docs/drivers.md](docs/drivers.md#simulator).
@@ -185,6 +187,11 @@ gizlenir; konum yalnızca **Konumu dahil et** işaretliyse eklenir (harita/konum
 bağlı değil ya da Windows `193.168.0.1`'i yanlış arayüze yolluyor. [docs/windows-network.md](docs/windows-network.md).
 
 **`gps: no_fix`** — Kamera bağlı ama uydu kilidi yok. Açık gökyüzünde birkaç dakika bekle.
+
+**Tünel / kapalı otopark (GPS koptu)** — Harita son bilinen konumda kalır, hız 0 görünür; sinyal gelince kaldığı
+yerden devam eder. OBS sahnesi ya da bilgisayar bu sırada yeniden başlasa bile son konum korunur: sunucu son konumu
+`last-position.json` dosyasında saklar ve yeni bağlanan overlay'e "son bilinen konum" olarak gönderir, overlay de
+tarayıcıda son konumu hatırlar. Kapatmak için `"rememberLastPosition": false`.
 
 **Overlay bir uyarı gösteriyor** — Overlay bağlanamazsa sunucunun `/health` ucuna sorup nedenini yazar:
 

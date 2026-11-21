@@ -25,6 +25,8 @@ In scope:
   not in `allowedOrigins` gets 403, so a random website open on the streamer's PC cannot read the location.
 - **DNS rebinding.** While bound to loopback, requests whose `Host` is not a loopback name are refused (421).
 - **Optional token** compared in constant time.
+- **Last position on disk.** To survive restarts while GPS is lost, the last position of each source is kept in the
+  user's own profile folder (`last-position.json`, `rememberLastPosition: false` turns it off). Nothing else is stored.
 - **Read-only towards devices.** Drivers never send commands that change device settings.
 - **Secrets from devices.** DDPAI's `API_GetBaseInfo` returns the Wi-Fi password in plain text. Only model and
   firmware are kept; the raw reply is never logged or forwarded.

@@ -76,6 +76,11 @@ after the `status` messages, the current fix is repeated if there is one.
 | `mode` | — | optional, RMC mode (A autonomous, D differential, E estimated) |
 | `timestamp` | epoch ms, UTC | GPS time when the device sends it, otherwise server time |
 
+`lastKnown: true` marks a position that is **not live**: the last one known before GPS was lost (tunnel) or from a
+previous run (the server keeps it on disk, see `rememberLastPosition`). It is sent once, right after the `status`
+messages, to a client that connects while the source has no fix. Show it without speed; live fixes follow without the
+flag.
+
 The field names match the overlay's `Fix` type, so a client can pass a fix through unchanged. Smoothing between
 fixes is the client's job.
 

@@ -31,6 +31,7 @@ uydu göstergesi, uyarı bandı...
 | `quality` | 1 GPS, 2 DGPS, 4 RTK, 5 RTK float, 6 dead reckoning | ✅ | GGA |
 | `mode` | A autonomous, D differential, E estimated | ✅ | RMC |
 | `timestamp` | epoch ms UTC, GPS time | ✅ | RMC date + time |
+| `lastKnown` | `true` = not live (GPS lost / earlier run); only on the first message after connecting | — | server |
 
 ## State (`status`)
 

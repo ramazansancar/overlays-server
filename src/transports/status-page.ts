@@ -60,7 +60,7 @@ export function statusPageHtml(): string {
     server: 'Overlay adresi:', repo: 'Kaynak kod, hata bildirimi ve kurulum rehberi:', show: 'Konumu göster', hide: 'Konumu gizle',
     none: 'Kaynak yok.', live: 'canlı', connecting: 'bağlanıyor…', lost: 'sunucu bağlantısı yok, yeniden deneniyor…',
     link: 'Bağlantı', gps: 'GPS', device: 'Cihaz', sats: 'Uydu', pos: 'Konum', speed: 'Hız', heading: 'Yön', alt: 'Rakım',
-    age: 'Son veri', active: 'aktif', msg: 'Not', ago: 'sn önce', storage: 'Hafıza kartı', free: 'boş', cameras: 'Kamera',
+    age: 'Son veri', lastKnown: 'son bilinen konum (GPS yok)', active: 'aktif', msg: 'Not', ago: 'sn önce', storage: 'Hafıza kartı', free: 'boş', cameras: 'Kamera',
     streams: 'RTSP (OBS Ortam Kaynağı)', gforce: 'İvme (g)', details: 'Diğer cihaz bilgileri', quality: 'Fix kalitesi',
     diagTitle: 'Sorun mu var? Tanı verisini indir',
     diagText: 'Cihazdan gelen son ~2 dakikalık ham veri, son log satırları, ayarlar ve durum tek bir dosyada. Hata bildirirken bu dosyayı issue\\'ya ekle; sorunu aynen tekrar oynatıp düzeltebiliriz. Wi-Fi şifresi, seri numarası ve MAC adresleri her zaman gizlenir.',
@@ -72,7 +72,7 @@ export function statusPageHtml(): string {
     server: 'Overlay address:', repo: 'Source code, issues and setup guide:', show: 'Show location', hide: 'Hide location',
     none: 'No sources.', live: 'live', connecting: 'connecting…', lost: 'no connection to the server, retrying…',
     link: 'Link', gps: 'GPS', device: 'Device', sats: 'Satellites', pos: 'Position', speed: 'Speed', heading: 'Heading', alt: 'Altitude',
-    age: 'Last data', active: 'active', msg: 'Note', ago: 's ago', storage: 'Memory card', free: 'free', cameras: 'Cameras',
+    age: 'Last data', lastKnown: 'last known position (no GPS)', active: 'active', msg: 'Note', ago: 's ago', storage: 'Memory card', free: 'free', cameras: 'Cameras',
     streams: 'RTSP (OBS Media Source)', gforce: 'Acceleration (g)', details: 'Other device info', quality: 'Fix quality',
     diagTitle: 'Having a problem? Download diagnostics',
     diagText: 'The last ~2 minutes of raw device data, recent log lines, settings and state in one file. Attach it to your issue; we can replay the problem exactly and fix it. Wi-Fi passwords, serial numbers and MAC addresses are always removed.',
@@ -153,7 +153,7 @@ export function statusPageHtml(): string {
         if (f.heading !== undefined) rows.push([T.heading, f.heading.toFixed(0) + '°']);
         if (f.altitude !== undefined) rows.push([T.alt, f.altitude.toFixed(0) + ' m']);
         if (f.quality !== undefined) rows.push([T.quality, f.quality + (f.hdop !== undefined ? ' · HDOP ' + f.hdop : '')]);
-        rows.push([T.age, Math.max(0, Math.round((Date.now() - s.fixAt) / 1000)) + ' ' + T.ago]);
+        rows.push([T.age, (f.lastKnown ? T.lastKnown + ' · ' : '') + (f.lastKnown && f.timestamp ? new Date(f.timestamp).toLocaleString() : Math.max(0, Math.round((Date.now() - s.fixAt) / 1000)) + ' ' + T.ago)]);
       }
       if (st.message) rows.push([T.msg, st.message]);
       const extra = dev && dev.details && Object.keys(dev.details).length

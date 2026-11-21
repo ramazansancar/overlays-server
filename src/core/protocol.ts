@@ -39,6 +39,11 @@ export interface StatusMessage {
 export interface FixMessage extends GpsFix {
   type: 'fix';
   source: string;
+  /**
+   * Not live: the last position known before GPS was lost (tunnel, restart). Sent once when a client connects while
+   * the source has no fix; live fixes leave it out.
+   */
+  lastKnown?: true;
 }
 
 export interface MotionMessage extends MotionSample {
@@ -69,8 +74,8 @@ export function statusMessage(s: SourceSnapshot): StatusMessage {
   };
 }
 
-export function fixMessage(source: string, fix: GpsFix): FixMessage {
-  return { type: 'fix', source, ...fix };
+export function fixMessage(source: string, fix: GpsFix, lastKnown = false): FixMessage {
+  return { type: 'fix', source, ...fix, ...(lastKnown && { lastKnown: true as const }) };
 }
 
 export function motionMessage(source: string, sample: MotionSample): MotionMessage {

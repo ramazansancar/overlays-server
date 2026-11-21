@@ -152,6 +152,19 @@ export class Hub {
     return [...this.entries.values()].map((e) => this.toSnapshot(e));
   }
 
+  /**
+   * Gives a source a last known position from an earlier run (see LastPositionStore). It is served to clients as
+   * `lastKnown` until the device reports a live fix; the GPS state is not changed.
+   */
+  seedLastFix(id: string, fix: GpsFix, receivedAt: number): void {
+    const entry = this.entries.get(id);
+    if (!entry || entry.lastFix) return;
+    const clean = normalizeFix(fix);
+    if (!clean) return;
+    entry.lastFix = clean;
+    entry.lastFixAt = receivedAt;
+  }
+
   /** Recent raw device messages of a source, oldest first (for diagnostics). */
   recentFrames(id: string): RawFrame[] {
     return [...(this.entries.get(id)?.raw ?? [])];

@@ -32,6 +32,12 @@ export interface AppConfig {
   /** Upper bound for motion messages per client per second. */
   motionMaxHz: number;
   logLevel: LogLevel;
+  /**
+   * Keep each source's last position on disk so it survives restarts while GPS is lost (tunnels).
+   * Stored in `stateFile` (default: next to the per-user config).
+   */
+  rememberLastPosition: boolean;
+  stateFile: string;
   sources: SourceConfig[];
 }
 
@@ -61,6 +67,8 @@ export function parseConfig(raw: unknown, onWarning: (message: string) => void =
     gpsPriority: o.stringList('gpsPriority', []),
     motionMaxHz: o.number('motionMaxHz', 10, { min: 0, max: 100 }),
     logLevel: o.oneOf('logLevel', LOG_LEVELS, 'info'),
+    rememberLastPosition: o.boolean('rememberLastPosition', true),
+    stateFile: o.string('stateFile', userStatePath()),
     sources: o.has('sources') ? parseSources(o.raw('sources')) : structuredClone(DEFAULT_SOURCES),
   };
   for (const key of o.unknownKeys()) onWarning(`config: unknown key "${key}" ignored`);
@@ -93,6 +101,11 @@ export function userConfigPath(): string {
       ? (process.env.APPDATA ?? path.join(os.homedir(), 'AppData', 'Roaming'))
       : (process.env.XDG_CONFIG_HOME ?? path.join(os.homedir(), '.config'));
   return path.join(base, 'overlays-server', 'config.json');
+}
+
+/** Per-user file for the remembered last positions. */
+export function userStatePath(): string {
+  return path.join(path.dirname(userConfigPath()), 'last-position.json');
 }
 
 /**

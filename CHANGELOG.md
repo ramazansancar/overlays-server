@@ -12,6 +12,8 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Last known position: kept on disk (`rememberLastPosition`, `stateFile`) and sent with `lastKnown: true` to clients
+  that connect while GPS is lost (tunnels) or after a restart; the status page marks it.
 - Local bridge server: WebSocket (`/v1/ws`), Server-Sent Events (`/v1/stream`), JSON state (`/v1/state`),
   health check and a status page.
 - Modular driver system (`defineDriver`), multiple sources, GPS source priority with automatic failover,

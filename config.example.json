@@ -9,6 +9,7 @@
   "staleAfterMs": 5000,
   "motionMaxHz": 10,
   "logLevel": "info",
+  "rememberLastPosition": true,
   "gpsPriority": ["ddpai"],
   "sources": [
     {

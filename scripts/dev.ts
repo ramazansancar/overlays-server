@@ -15,6 +15,8 @@
  *
  * Use `pnpm dev:camera` for the real camera.
  */
+import os from 'node:os';
+import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { startFakeDdpai } from './lib/fake-ddpai.ts';
 import { loadReplayFrames } from './lib/replay.ts';
@@ -69,6 +71,8 @@ const camera = fake
 const config = parseConfig({
   port: values.port,
   logLevel: values['log-level'],
+  // Never touch the real remembered position (a streamer may run this on their own PC).
+  stateFile: path.join(os.tmpdir(), 'overlays-server-dev-last-position.json'),
   sources: [
     {
       id: 'ddpai',

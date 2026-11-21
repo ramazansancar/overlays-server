@@ -56,6 +56,7 @@ describe('server with a fake DDPAI camera', () => {
     const config = parseConfig({
       port: 0,
       logLevel: 'silent',
+      rememberLastPosition: false,
       sources: [
         {
           id: 'cam',

@@ -34,6 +34,7 @@ describe('diagnostics, health and the all-sources stream', () => {
     const config = parseConfig({
       port: 0,
       logLevel: 'silent',
+      rememberLastPosition: false,
       token: 'tok',
       sources: [
         { id: 'cam', driver: 'ddpai', options: { host: '127.0.0.1', telemetryPort: fake.telemetryPort, httpPort: fake.httpPort } },
@@ -121,6 +122,7 @@ describe('diagnostics, health and the all-sources stream', () => {
       config: parseConfig({
         port: 0,
         logLevel: 'silent',
+        rememberLastPosition: false,
         sources: [{ id: 'replay', driver: 'ddpai', options: { host: '127.0.0.1', telemetryPort: replayCam.telemetryPort, deviceInfo: false } }],
       }),
       log: silentLogger,

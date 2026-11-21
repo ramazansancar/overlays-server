@@ -61,12 +61,10 @@ export function openFeed(
   });
   const snapshots = hub.snapshots();
   for (const snapshot of snapshots) send(statusMessage(snapshot));
-  if (isAll) {
-    // Every source's last known position (even stale: the status says how old it is).
-    for (const s of snapshots) if (s.lastFix) send(fixMessage(s.id, s.lastFix));
-  } else {
-    const current = snapshots.find((s) => follows(s.id, s.active));
-    if (current?.lastFix && current.status.gps === 'fix') send(fixMessage(current.id, current.lastFix));
+  // The current position, or the last known one (marked) while GPS is lost: a client that (re)connects in a tunnel
+  // still gets something to show.
+  for (const s of isAll ? snapshots : snapshots.filter((x) => follows(x.id, x.active)).slice(0, 1)) {
+    if (s.lastFix) send(fixMessage(s.id, s.lastFix, s.status.gps !== 'fix'));
   }
 
   return hub.subscribe((event) => {

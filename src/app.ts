@@ -2,6 +2,7 @@ import type { AddressInfo } from 'node:net';
 import type { AppConfig } from './config.ts';
 import type { AnyDriver, Source, SourceContext } from './core/driver.ts';
 import { Hub } from './core/hub.ts';
+import { LastPositionStore } from './core/last-position.ts';
 import { DriverRegistry } from './core/registry.ts';
 import { BUILTIN_DRIVERS } from './drivers/index.ts';
 import { createLogger, errorMessage, LogBuffer, recordingLogger, type Logger } from './lib/log.ts';
@@ -57,6 +58,22 @@ export async function startServer(options: StartOptions): Promise<RunningServer>
     return { id: plan.config.id, ctx, source: plan.driver.create(ctx, plan.options) };
   });
 
+  // Last positions from the previous run, then keep the file current.
+  const positions = config.rememberLastPosition ? new LastPositionStore(config.stateFile, log.child('state')) : undefined;
+  if (positions) {
+    const remembered = positions.load();
+    for (const r of running) {
+      const p = remembered[r.id];
+      if (p) hub.seedLastFix(r.id, p.fix, p.savedAt);
+    }
+    const seeded = running.filter((r) => remembered[r.id]).length;
+    if (seeded) log.info(`last known position restored for ${seeded} source(s)`);
+    hub.subscribe((e) => {
+      if (e.kind === 'fix') positions.update(e.source, e.fix);
+    });
+    positions.start();
+  }
+
   const { server, closeClients } = createHttpServer({
     hub,
     host: config.host,
@@ -111,6 +128,7 @@ export async function startServer(options: StartOptions): Promise<RunningServer>
         }
       }
       hub.stop();
+      positions?.stop();
       closeClients();
       await new Promise<void>((resolve) => server.close(() => resolve()));
       server.closeAllConnections();

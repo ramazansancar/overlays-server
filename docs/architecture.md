@@ -71,6 +71,9 @@ start the sources (a failing source is reported, not fatal), and shut everything
   bug reports. Secrets always masked (`lib/redact.ts`), positions only on request.
 - **Replay**: the fake DDPAI camera (`scripts/lib/fake-ddpai.ts`) streams a diagnostics file's frames with their
   original timing, so a streamer's problem runs on a developer machine through the real driver.
+- **Last position**: `LastPositionStore` writes each source's last fix to `last-position.json` (every 10 s, atomically,
+  and on shutdown); on start the hub is seeded with it, and clients connecting without a live fix get it with
+  `lastKnown: true`. GPS lost in a tunnel or a restart never leaves the map without a position.
 - **Probe** (`--probe <host>`, `src/tools/probe.ts`): read-only device inspection for new-device reports.
 - **Updates**: npm (`npx overlays-server@latest`) or git; `start.cmd` pulls before starting.
 
