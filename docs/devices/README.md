@@ -17,6 +17,7 @@ this table (no names of private people, no locations).
 | Date | Device | Firmware | overlays-server | Environment | Result |
 | --- | --- | --- | --- | --- | --- |
 | 2026-11-21 | DDPAI N5 Pro (`DN2509_Overseas`) | `v8.0.0.10` | protocol capture (pre-0.1.0) | Windows, PC on camera Wi-Fi + Ethernet internet, OBS 33.0.1 | ✅ TCP 6100 stream verified: GPS 1 Hz (RMC + GGA, 30 satellites, HDOP 0.5), G-sensor ~16 Hz. Found the GN/GP checksum quirk. `/current.gpx` 404 |
+| 2026-11-21 | DDPAI N5 Pro (`DN2509_Overseas`) | `v8.0.0.10` | 0.1.0 | Windows, camera Wi-Fi + Ethernet internet, OBS 33.0.1 browser source, overlays.ramazansancar.com.tr map | ✅ Field test on the streamer's setup: live position on the map overlay, no problems reported |
 | 2026-11-21 | Fake DDPAI camera (`pnpm dev`) | — | 0.1.0 | Windows 10, Node 22.18 | ✅ Automated tests: fixes, no-fix, reconnect, device info |
 
 ### What a test entry should contain
