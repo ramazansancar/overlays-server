@@ -5,7 +5,7 @@ import { findConfigFile, parseConfig, readConfigFile, userConfigPath, type AppCo
 import { BUILTIN_DRIVERS } from './drivers/index.ts';
 import { createLogger, errorMessage, LOG_LEVELS, type LogLevel } from './lib/log.ts';
 import { ConfigError } from './lib/options.ts';
-import { VERSION } from './version.ts';
+import { REPO_URL, VERSION } from './version.ts';
 
 const HELP = `overlays-server ${VERSION}
 Local telemetry bridge for stream overlays (live dashcam GPS -> browser source).
@@ -28,7 +28,7 @@ Options:
   -h, --help               Show this help
 
 Environment: OVERLAYS_SERVER_PORT, OVERLAYS_SERVER_HOST, OVERLAYS_SERVER_LOG_LEVEL, OVERLAYS_SERVER_CONFIG.
-Docs: https://github.com/ramazansancar/overlays-server
+Docs: ${REPO_URL}
 `;
 
 function parseCli() {

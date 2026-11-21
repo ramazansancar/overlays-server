@@ -30,4 +30,4 @@ export { createLogger, type Logger, type LogLevel } from './lib/log.ts';
 export * as nmea from './lib/nmea.ts';
 export { ConfigError, OptionReader } from './lib/options.ts';
 export { ReconnectingTcpClient, type ReconnectingTcpOptions } from './lib/reconnecting-tcp.ts';
-export { VERSION } from './version.ts';
+export { REPO_URL, VERSION } from './version.ts';

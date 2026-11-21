@@ -1,4 +1,4 @@
-import { VERSION } from '../version.ts';
+import { REPO_URL, VERSION } from '../version.ts';
 
 /**
  * Small self-contained page at `/` for the streamer: is the camera connected, is there a fix?
@@ -26,6 +26,7 @@ export function statusPageHtml(): string {
   dl { display:grid; grid-template-columns:max-content 1fr; gap:4px 16px; margin:12px 0 0; }
   dt { color:var(--muted); } dd { margin:0; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
   code { background:var(--bg); padding:1px 6px; border-radius:6px; }
+  a { color:inherit; } footer { margin-top:24px; font-size:13px; }
   button { font:inherit; padding:4px 12px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--fg); cursor:pointer; }
 </style>
 </head>
@@ -36,20 +37,21 @@ export function statusPageHtml(): string {
   <div class="card"><div class="row"><span id="server-label"></span><code id="ws-url"></code>
     <button id="toggle" type="button"></button></div></div>
   <div id="sources"></div>
+  <footer class="muted"><span id="repo-label"></span> <a href="${REPO_URL}" target="_blank" rel="noopener noreferrer">${REPO_URL.replace('https://', '')}</a></footer>
 </main>
 <script>
 (() => {
   const tr = (navigator.language || '').toLowerCase().startsWith('tr');
   const T = tr ? {
     intro: 'Harita overlay ayarlarında konum kaynağı olarak <b>Yerel sunucu</b> seç. Bu sayfa yayında gösterilebilir; koordinatlar gizli.',
-    server: 'Overlay adresi:', show: 'Konumu göster', hide: 'Konumu gizle', none: 'Kaynak yok.', offline: 'Sunucuya ulaşılamıyor.',
+    server: 'Overlay adresi:', repo: 'Kaynak kod, hata bildirimi ve kurulum rehberi:', show: 'Konumu göster', hide: 'Konumu gizle', none: 'Kaynak yok.', offline: 'Sunucuya ulaşılamıyor.',
     link: 'Bağlantı', gps: 'GPS', device: 'Cihaz', sats: 'Uydu', pos: 'Konum', speed: 'Hız', heading: 'Yön', alt: 'Rakım',
     age: 'Son veri', active: 'aktif', msg: 'Not', ago: 'sn önce',
     states: { starting:'başlıyor', connecting:'bağlanıyor', online:'bağlı', offline:'koptu', stopped:'durdu',
       unknown:'bilinmiyor', no_fix:'uydu aranıyor', fix:'konum var', stale:'veri durdu' },
   } : {
     intro: 'In the map overlay settings pick <b>Local server</b> as the location source. Safe to show on stream; coordinates are hidden.',
-    server: 'Overlay address:', show: 'Show location', hide: 'Hide location', none: 'No sources.', offline: 'Server unreachable.',
+    server: 'Overlay address:', repo: 'Source code, issues and setup guide:', show: 'Show location', hide: 'Hide location', none: 'No sources.', offline: 'Server unreachable.',
     link: 'Link', gps: 'GPS', device: 'Device', sats: 'Satellites', pos: 'Position', speed: 'Speed', heading: 'Heading', alt: 'Altitude',
     age: 'Last data', active: 'active', msg: 'Note', ago: 's ago',
     states: { starting:'starting', connecting:'connecting', online:'online', offline:'offline', stopped:'stopped',
@@ -61,6 +63,7 @@ export function statusPageHtml(): string {
   let showPos = false;
   $('intro').innerHTML = T.intro;
   $('server-label').textContent = T.server;
+  $('repo-label').textContent = T.repo;
   $('ws-url').textContent = 'ws://' + location.host + '/v1/ws';
   const toggle = $('toggle');
   toggle.textContent = T.show;
