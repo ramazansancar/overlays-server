@@ -83,7 +83,7 @@ git pull
 npm install --omit=dev      # updates dependencies if they changed
 ```
 
-A specific version: `git fetch --tags && git checkout v0.1.0`. Changes: [CHANGELOG.md](CHANGELOG.md).
+A specific version: `git fetch --tags && git checkout v0.1.1`. Changes: [CHANGELOG.md](CHANGELOG.md).
 
 There is no build step: Node.js 22.18+ runs the TypeScript files directly.
 

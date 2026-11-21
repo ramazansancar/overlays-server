@@ -83,7 +83,7 @@ git pull
 npm install --omit=dev      # bağımlılıklar değiştiyse günceller
 ```
 
-Belirli bir sürüme geçmek için: `git fetch --tags && git checkout v0.1.0`. Değişiklikler: [CHANGELOG.md](CHANGELOG.md).
+Belirli bir sürüme geçmek için: `git fetch --tags && git checkout v0.1.1`. Değişiklikler: [CHANGELOG.md](CHANGELOG.md).
 
 Derleme adımı yok: Node.js 22.18+ TypeScript dosyalarını doğrudan çalıştırır.
 

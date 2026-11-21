@@ -132,11 +132,11 @@ indirmesini iste.
 ```bash
 cd overlays-server
 pnpm build
-npm pack                                   # overlays-server-0.1.0.tgz
+npm pack                                   # overlays-server-0.1.1.tgz
 cd ..
 mkdir npm-test && cd npm-test
 npm init -y
-npm install ../overlays-server/overlays-server-0.1.0.tgz
+npm install ../overlays-server/overlays-server-0.1.1.tgz
 npx overlays-server --simulate             # http://127.0.0.1:3456
 ```
 

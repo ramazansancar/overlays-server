@@ -5,9 +5,19 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-21
+
+No changes to how the server runs; maintenance release.
+
 ### Fixed
 
 - CI: the `start.cmd` update test failed on pull requests (detached checkout); the test clone is put on a branch.
+
+### Changed
+
+- CI and release workflows use actions on Node 24 (checkout v7, setup-node v7, pnpm/action-setup v6,
+  upload-artifact v7).
+- Dev dependency: Playwright 1.65.1.
 
 ## [0.1.0] - 2026-11-21
 
@@ -63,5 +73,6 @@ First release, on npm as [`overlays-server`](https://www.npmjs.com/package/overl
   camera count, RTSP stream URLs and every other non-secret field (re-read every 60 s); unknown device messages as
   `event` (`?events=1`, `?all=1`); `lastMotion` in `/v1/state`; richer status page. Data catalog: `docs/data.md`.
 
-[Unreleased]: https://github.com/ramazansancar/overlays-server/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/ramazansancar/overlays-server/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/ramazansancar/overlays-server/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/ramazansancar/overlays-server/releases/tag/v0.1.0

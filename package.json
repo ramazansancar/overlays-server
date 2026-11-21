@@ -1,6 +1,6 @@
 {
   "name": "overlays-server",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Local telemetry bridge for stream overlays: reads live GPS from dashcams (DDPAI, ...) and serves it to browser-source overlays over WebSocket / SSE.",
   "license": "AGPL-3.0-or-later",
   "author": "Ramazan Sancar",
@@ -66,7 +66,7 @@
     "ws": "8.23.0"
   },
   "devDependencies": {
-    "@playwright/test": "1.64.1",
+    "@playwright/test": "1.65.1",
     "@types/node": "22.20.5",
     "@types/ws": "8.18.2",
     "typescript": "7.0.2"

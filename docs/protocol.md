@@ -30,7 +30,7 @@ message types can be added within v1; removing or changing the meaning of a fiel
 First message on every connection.
 
 ```json
-{ "type": "hello", "server": "overlays-server", "version": "0.1.0", "protocol": 1,
+{ "type": "hello", "server": "overlays-server", "version": "0.1.1", "protocol": 1,
   "subscription": "auto", "activeSource": "ddpai" }
 ```
 
@@ -108,7 +108,7 @@ compatibility promise.
 Cheap "is the server up?" check, no token needed, no position data:
 
 ```json
-{ "ok": true, "server": "overlays-server", "version": "0.1.0", "protocol": 1,
+{ "ok": true, "server": "overlays-server", "version": "0.1.1", "protocol": 1,
   "sources": [{ "id": "ddpai", "driver": "ddpai", "link": "online", "gps": "fix" }] }
 ```
 
