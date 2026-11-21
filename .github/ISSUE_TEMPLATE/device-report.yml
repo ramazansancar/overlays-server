@@ -1,44 +1,127 @@
-name: Device report / Cihaz test sonucu
-description: Tried overlays-server with a camera or GPS device? Tell us how it went.
+name: Device report / Cihaz raporu
+description: Tried overlays-server with a camera or GPS device, or want one supported? Send what the device exposes.
 labels: [device]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks! Reports from other models are how new devices get supported.
+        Thanks! Reports like this are how new devices get supported, even without the device in our hands.
+        Teşekkürler! Yeni cihazlar bu raporlarla, cihaz elimizde olmadan desteklenebiliyor.
+
+        **Guide / Rehber:** [docs/new-device.md](https://github.com/ramazansancar/overlays-server/blob/master/docs/new-device.md).
+        The boxes below contain hidden instructions and commands (`<!-- ... -->`); they stay invisible after you post.
+        Aşağıdaki kutularda gizli talimatlar ve komutlar var; gönderince görünmezler.
+
         **Remove real coordinates, Wi-Fi names, passwords, serial numbers and MAC addresses.**
+        **Gerçek koordinatları, Wi-Fi adını/şifresini, seri numarasını ve MAC adreslerini sil.**
+
   - type: input
     id: device
     attributes:
       label: Device model / Cihaz modeli
+      description: Brand and model as printed on the box or shown in the phone app. / Kutuda ya da telefon uygulamasında yazan marka ve model.
       placeholder: DDPAI Z50
     validations:
       required: true
+
   - type: input
     id: firmware
     attributes:
       label: Firmware version
-      description: Shown on the status page (http://127.0.0.1:3456) when device info is available.
+      description: >-
+        Phone app → device settings → "Firmware" / "Version", the overlays-server status page (http://127.0.0.1:3456)
+        or the probe report below. / Telefon uygulaması → cihaz ayarları → "Yazılım sürümü", durum sayfası ya da probe raporu.
+      placeholder: v8.0.0.10
     validations:
       required: true
+
   - type: dropdown
     id: result
     attributes:
       label: Result / Sonuç
       options:
-        - Works (fixes arrive) / Çalışıyor
-        - Connects, but no fix / Bağlanıyor ama konum yok
+        - Not tried with overlays-server yet (probe report only) / Henüz denemedim (sadece probe)
+        - Works, positions arrive / Çalışıyor, konum geliyor
+        - Connects, but no position / Bağlanıyor ama konum yok
         - Does not connect / Bağlanmıyor
     validations:
       required: true
+
   - type: textarea
-    id: ports
+    id: probe
     attributes:
-      label: Open ports / Açık portlar
-      description: "Optional. PowerShell: `21,23,80,443,554,6100,8080 | % { \"$_ \" + (Test-NetConnection 193.168.0.1 -Port $_ -WarningAction SilentlyContinue).TcpTestSucceeded }`"
-      render: text
+      label: Probe report / Probe raporu
+      description: Output of `npx overlays-server@latest --probe <device-ip>`. Paste it as is (it is Markdown). / Komutun çıktısını olduğu gibi yapıştır.
+      value: |
+        <!--
+        1) Connect this PC to the device's Wi-Fi.          / Bilgisayarı cihazın Wi-Fi'ına bağla.
+        2) Find the device IP (usually the Wi-Fi gateway): / Cihazın IP'sini bul (genelde Wi-Fi ağ geçidi):
+
+             PowerShell:  Get-NetIPConfiguration | Where-Object InterfaceAlias -like 'Wi-Fi*' | ForEach-Object { $_.IPv4DefaultGateway.NextHop }
+             CMD:         ipconfig        ("Default Gateway" / "Varsayılan Ağ Geçidi" under the Wi-Fi adapter)
+             macOS:       route -n get default | grep gateway
+             Linux:       ip route | grep default
+
+           Common: DDPAI 193.168.0.1, 70mai 192.168.0.1, Viofo 192.168.1.254, BlackVue 10.99.77.1
+
+        3) Run the probe (needs Node.js 22.18+) and paste the output below this comment:
+           Probe'u çalıştır ve çıktıyı bu yorumun altına yapıştır:
+
+             npx overlays-server@latest --probe 193.168.0.1
+             npx overlays-server@latest --probe 193.168.0.1 | clip              (Windows: copies to clipboard / panoya kopyalar)
+             npx overlays-server@latest --probe 193.168.0.1 --probe-ports 80,554,6100,8080
+
+           Best results: device powered, GPS locked (outdoors). It is read-only and masks positions,
+           Wi-Fi credentials, serials and MACs. Still, read it once before posting.
+        -->
+
+  - type: textarea
+    id: manual
+    attributes:
+      label: Manual checks (if the probe could not run) / Elle kontrol (probe çalışmadıysa)
+      description: Optional. / İsteğe bağlı.
+      value: |
+        <!--
+        Replace 193.168.0.1 with your device IP. / 193.168.0.1 yerine cihazının IP'sini yaz.
+
+        Open ports (PowerShell):
+          21,23,80,443,554,1935,6000,6100,7000,8000,8080,8554,8888,9000 | ForEach-Object { "$_ " + (Test-NetConnection 193.168.0.1 -Port $_ -WarningAction SilentlyContinue).TcpTestSucceeded }
+
+        HTTP server name (CMD or PowerShell, use curl.exe in PowerShell):
+          curl.exe -s -I http://193.168.0.1/
+
+        DDPAI-style API (other brands may answer too). The reply contains the Wi-Fi PASSWORD:
+        copy only "model" and "version". / Yanıtta Wi-Fi ŞİFRESİ var: sadece "model" ve "version" değerlerini kopyala.
+          curl.exe -s "http://193.168.0.1/vcam/cmd.cgi?cmd=API_GetBaseInfo"
+
+        RTSP server (live video):
+          curl.exe -s -i -X OPTIONS rtsp://193.168.0.1:554/
+
+        Data pushed on a port (5 seconds; mask coordinates like 3948.1553,N before posting):
+          powershell -c "$c=New-Object Net.Sockets.TcpClient('193.168.0.1',6100);$s=$c.GetStream();$s.ReadTimeout=5000;$b=New-Object byte[] 4096;$n=$s.Read($b,0,4096);[Text.Encoding]::UTF8.GetString($b,0,$n);$c.Close()"
+        -->
+        ```text
+
+        ```
+
+  - type: input
+    id: env
+    attributes:
+      label: Environment / Ortam
+      description: OS, how the PC reaches the device, OBS version. / İşletim sistemi, bağlantı şekli, OBS sürümü.
+      placeholder: Windows 11, camera Wi-Fi + Ethernet internet, OBS 33.0.1
+
   - type: textarea
     id: logs
     attributes:
-      label: Logs (`--log-level debug`), especially `new message type ...` lines
-      render: text
+      label: overlays-server log
+      description: Optional. Run with `--log-level debug`; lines like `new message type ...` are especially useful.
+      value: |
+        <!--
+        npx overlays-server@latest --log-level debug
+        (git install: npm start -- --log-level debug)
+        Let it run ~30 seconds with the device connected, then paste the console output here.
+        -->
+        ```text
+
+        ```

@@ -14,10 +14,15 @@ List them with `overlays-server --list-drivers`.
 
 ## Adding a driver
 
+No device at hand? Ask for a probe report first ([new-device.md](new-device.md)): it shows the ports, message types
+and sample frames you need to write the parser and a fake device.
+
+
 1. Create `src/drivers/<id>/index.ts` (or `src/drivers/<id>.ts` for a small one).
 2. Export a `defineDriver({...})`.
 3. Add it to `BUILTIN_DRIVERS` in `src/drivers/index.ts`.
-4. Add tests (parser unit tests + ideally a fake device in `scripts/lib/`) and a page in `docs/devices/`.
+4. Add tests (parser unit tests + ideally a fake device in `scripts/lib/`), a page in `docs/devices/`, and a row in
+   the support table and test log of [devices/README.md](devices/README.md) (device, firmware, environment, result).
 
 ### The contract
 

@@ -29,5 +29,7 @@ export { DelimitedDecoder } from './lib/delimited.ts';
 export { createLogger, type Logger, type LogLevel } from './lib/log.ts';
 export * as nmea from './lib/nmea.ts';
 export { ConfigError, OptionReader } from './lib/options.ts';
+export { redact } from './lib/redact.ts';
+export { DEFAULT_PROBE_PORTS, formatProbeReport, probeDevice, type ProbeReport } from './tools/probe.ts';
 export { ReconnectingTcpClient, type ReconnectingTcpOptions } from './lib/reconnecting-tcp.ts';
 export { REPO_URL, VERSION } from './version.ts';

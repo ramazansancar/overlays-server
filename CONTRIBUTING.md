@@ -4,8 +4,10 @@ Thanks for helping! Türkçe soru ve katkılar da memnuniyetle karşılanır.
 
 The most valuable contributions right now:
 
-1. **Test reports from other cameras** (other DDPAI models, firmware versions, other brands). Use the
-   [device report](https://github.com/ramazansancar/overlays-server/issues/new?template=device-report.yml) issue form.
+1. **Test reports from other cameras** (other DDPAI models, firmware versions, other brands): run
+   `npx overlays-server@latest --probe <device-ip>` and post it with the
+   [device report](https://github.com/ramazansancar/overlays-server/issues/new?template=device-report.yml) form.
+   Step by step: [docs/new-device.md](docs/new-device.md). Tested devices: [docs/devices/README.md](docs/devices/README.md).
 2. **New drivers** for devices that expose live GPS on the network (see [docs/drivers.md](docs/drivers.md)).
 3. Bug reports with logs (`--log-level debug`). **Remove coordinates and Wi-Fi names/passwords first.**
 
@@ -58,12 +60,14 @@ src/
     simulator.ts         fake GPS for development
   lib/                   NMEA parser, NUL framing, reconnecting TCP client, logger, option reader
   transports/            HTTP routes, WebSocket, SSE, origin/host/token checks, status page
+  tools/probe.ts         --probe: device inspection report for new-device issues
 scripts/                 dev tools (fake camera)
 test/                    node:test suites
 docs/                    architecture, protocol, drivers, devices, setup guides
 ```
 
-Read [docs/architecture.md](docs/architecture.md) for how the pieces fit.
+Read [docs/architecture.md](docs/architecture.md) for how the pieces fit and [docs/testing-locally.md](docs/testing-locally.md)
+for trying the whole chain (fake camera → server → overlay site → OBS) on your machine.
 
 ## Code guidelines
 

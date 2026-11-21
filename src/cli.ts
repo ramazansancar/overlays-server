@@ -5,6 +5,7 @@ import { findConfigFile, parseConfig, readConfigFile, userConfigPath, type AppCo
 import { BUILTIN_DRIVERS } from './drivers/index.ts';
 import { createLogger, errorMessage, LOG_LEVELS, type LogLevel } from './lib/log.ts';
 import { ConfigError } from './lib/options.ts';
+import { runProbe } from './tools/probe.ts';
 import { REPO_URL, VERSION } from './version.ts';
 
 const HELP = `overlays-server ${VERSION}
@@ -24,6 +25,9 @@ Options:
       --log-level <level>  ${LOG_LEVELS.join(' | ')} (default info)
       --print-config       Print the effective config and exit
       --list-drivers       List available drivers and exit
+      --probe <host>       Inspect a device (ports, model, data samples) and print a report
+                           for a GitHub issue, then exit. Personal data is masked.
+      --probe-ports <list> Ports for --probe, comma separated (default: common camera ports)
   -v, --version            Print the version
   -h, --help               Show this help
 
@@ -49,6 +53,8 @@ function parseCli() {
       'log-level': { type: 'string' },
       'print-config': { type: 'boolean' },
       'list-drivers': { type: 'boolean' },
+      probe: { type: 'string' },
+      'probe-ports': { type: 'string' },
       version: { type: 'boolean', short: 'v' },
       help: { type: 'boolean', short: 'h' },
     },
@@ -99,6 +105,13 @@ async function main(): Promise<number> {
   if (args.version) {
     console.log(VERSION);
     return 0;
+  }
+  if (args.probe) {
+    const ports = args['probe-ports']?.split(',').map((p) => Number(p.trim()));
+    if (ports && ports.some((p) => !Number.isInteger(p) || p < 1 || p > 65535)) {
+      throw new ConfigError('--probe-ports: comma separated port numbers, e.g. 80,554,6100');
+    }
+    return runProbe(args.probe, ports ? { ports } : {});
   }
   if (args['list-drivers']) {
     for (const d of BUILTIN_DRIVERS) console.log(`${d.id.padEnd(12)} ${d.name} — ${d.description}`);

@@ -24,7 +24,9 @@ DDPAI kamera (Wi-Fi, 193.168.0.1:6100) ──► overlays-server (127.0.0.1:3456
 | Diğer DDPAI modelleri (TCP 6100 telemetrisi olanlar) | `ddpai` | Büyük olasılıkla çalışır, deneyip [bildir](https://github.com/ramazansancar/overlays-server/issues/new?template=device-report.yml) |
 | Simülatör (cihazsız deneme) | `simulator` | — |
 
-Cihaz ayrıntıları: [docs/devices/ddpai.md](docs/devices/ddpai.md).
+Cihaz ayrıntıları ve test edildiği ortamlar: [docs/devices/](docs/devices/README.md).
+**Cihazın listede yok mu?** [Yeni cihaz ekleme rehberi](docs/new-device.md): tek komutla (`--probe`) cihazını
+incele, raporu issue olarak gönder.
 
 ## Kurulum
 
@@ -33,15 +35,26 @@ Cihaz ayrıntıları: [docs/devices/ddpai.md](docs/devices/ddpai.md).
 ### A) npm ile (en kolay)
 
 ```bash
-npx overlays-server
+npx overlays-server@latest
 ```
 
-Her seferinde son sürümü çalıştırır. Kalıcı kurmak istersen:
+`@latest` her açılışta npm'deki son sürümü kontrol eder (yalnız `npx overlays-server` yazarsan daha önce indirilen
+sürüm kullanılabilir). Kalıcı kurmak istersen:
 
 ```bash
 npm install -g overlays-server
 overlays-server
 ```
+
+**Güncelleme (kalıcı kurulum):**
+
+```bash
+overlays-server --version            # kurulu sürüm
+npm outdated -g overlays-server      # yeni sürüm var mı? (çıktı boşsa güncelsin)
+npm install -g overlays-server@latest
+```
+
+Kaldırmak için: `npm uninstall -g overlays-server`.
 
 ### B) Git ile (kaynaktan)
 
@@ -53,7 +66,16 @@ npm start
 ```
 
 Windows'ta klasördeki **`start.cmd`** dosyasına çift tıklamak da yeterli (gerekirse bağımlılıkları kendisi kurar).
-Güncellemek için: `git pull`.
+
+**Güncelleme (git kurulumu):**
+
+```bash
+cd overlays-server
+git pull
+npm install --omit=dev      # bağımlılıklar değiştiyse günceller
+```
+
+Belirli bir sürüme geçmek için: `git fetch --tags && git checkout v0.1.0`. Değişiklikler: [CHANGELOG.md](CHANGELOG.md).
 
 Derleme adımı yok: Node.js 22.18+ TypeScript dosyalarını doğrudan çalıştırır.
 
@@ -73,7 +95,7 @@ gösterir (koordinatlar varsayılan olarak gizli, yayında gösterilebilir).
 > Overlay sitesindeki **Yerel sunucu** seçeneği overlays-server'ın ilk sürümüyle birlikte yayına alınacak.
 > O zamana kadar akışı durum sayfasından ya da `ws://127.0.0.1:3456/v1/ws` adresine bağlanarak deneyebilirsin.
 
-Kamera yoksa sistemi denemek için: `npx overlays-server --simulate` (Ankara'da daire çizen sahte konum).
+Kamera yoksa sistemi denemek için: `npx overlays-server@latest --simulate` (Ankara'da daire çizen sahte konum).
 
 ### Windows açılışında otomatik başlatma
 
@@ -82,7 +104,7 @@ kısayolunu koy:
 
 ```bat
 @echo off
-npx overlays-server
+npx overlays-server@latest
 ```
 
 ## Ayarlar
@@ -123,6 +145,8 @@ overlays-server [seçenekler]
       --log-level <seviye> debug | info | warn | error | silent
       --print-config       Geçerli ayarları yazdır ve çık
       --list-drivers       Sürücüleri listele ve çık
+      --probe <adres>      Cihazı incele (portlar, model, veri örnekleri), issue için rapor yazdır
+      --probe-ports <liste> --probe için portlar, virgülle (ör. 80,554,6100)
   -v, --version / -h, --help
 ```
 
@@ -186,6 +210,7 @@ pnpm check          # tip kontrolü (TypeScript 7) + testler
 pnpm build          # dist/ (npm paketi)
 ```
 
+Yerelde uçtan uca test (sahte kamera + overlay sitesi + OBS): [docs/testing-locally.md](docs/testing-locally.md).
 Mimari, kod kuralları ve yeni sürücü ekleme: [CONTRIBUTING.md](CONTRIBUTING.md), [docs/architecture.md](docs/architecture.md).
 
 ## Katkıda bulunanlar
@@ -211,15 +236,17 @@ Katkılar memnuniyetle karşılanır. Özellikle **farklı kamera modelleriyle t
 Requires **Node.js 22.18+**.
 
 ```bash
-# npm
-npx overlays-server
+# npm (update: npm install -g overlays-server@latest, or always run @latest)
+npx overlays-server@latest
 
-# or from source (no build step: Node runs the TypeScript directly)
+# or from source (no build step: Node runs the TypeScript directly; update: git pull && npm install --omit=dev)
 git clone https://github.com/ramazansancar/overlays-server.git
 cd overlays-server && npm install --omit=dev && npm start
 ```
 
-Open **<http://127.0.0.1:3456>** for the status page. Without a camera: `npx overlays-server --simulate`.
+Open **<http://127.0.0.1:3456>** for the status page. Without a camera: `npx overlays-server@latest --simulate`.
+Device not supported yet? Run `npx overlays-server@latest --probe <camera-ip>` and open a device report
+([guide](docs/new-device.md)).
 
 ### Use
 
