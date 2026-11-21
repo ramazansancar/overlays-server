@@ -3,6 +3,8 @@ rem overlays-server: git clone ile kurulumda cift tikla calistir.
 rem Acilista "git pull" ile kendini gunceller. Kapatmak icin: set OVERLAYS_SERVER_NO_UPDATE=1
 title overlays-server (pencereyi kapatma)
 cd /d "%~dp0"
+rem Gunluk log dosyalari bu klasorun altinda: logs (sorun bildirirken ekle).
+if not defined OVERLAYS_SERVER_LOG_DIR set "OVERLAYS_SERVER_LOG_DIR=%~dp0logs"
 set "NEED_INSTALL="
 if defined OVERLAYS_SERVER_AFTER_UPDATE goto :after_update
 

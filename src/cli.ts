@@ -1,9 +1,11 @@
 #!/usr/bin/env node
+import os from 'node:os';
 import { parseArgs } from 'node:util';
 import { startServer } from './app.ts';
-import { findConfigFile, parseConfig, readConfigFile, userConfigPath, type AppConfig } from './config.ts';
+import { findConfigFile, parseConfig, readConfigFile, userConfigPath, userLogDir, type AppConfig } from './config.ts';
 import { BUILTIN_DRIVERS } from './drivers/index.ts';
-import { createLogger, errorMessage, LOG_LEVELS, type LogLevel } from './lib/log.ts';
+import { LogFile } from './lib/log-file.ts';
+import { createLogger, errorMessage, LOG_LEVELS, recordingLogger, type LogLevel } from './lib/log.ts';
 import { ConfigError } from './lib/options.ts';
 import { runProbe } from './tools/probe.ts';
 import { REPO_URL, VERSION } from './version.ts';
@@ -27,6 +29,8 @@ Options:
       --ddpai-http-port <port>  DDPAI HTTP API port (default 80)
       --simulate           Use the built-in simulator instead of the configured sources
       --log-level <level>  ${LOG_LEVELS.join(' | ')} (default info)
+      --log-dir <folder>   Folder for the daily log files (default ${userLogDir()})
+      --no-log-file        Do not write log files
       --print-config       Print the effective config and exit
       --list-drivers       List available drivers and exit
       --probe <host>       Inspect a device (ports, model, data samples) and print a report
@@ -35,7 +39,8 @@ Options:
   -v, --version            Print the version
   -h, --help               Show this help
 
-Environment: OVERLAYS_SERVER_PORT, OVERLAYS_SERVER_HOST, OVERLAYS_SERVER_LOG_LEVEL, OVERLAYS_SERVER_CONFIG.
+Environment: OVERLAYS_SERVER_PORT, OVERLAYS_SERVER_HOST, OVERLAYS_SERVER_LOG_LEVEL, OVERLAYS_SERVER_LOG_DIR,
+OVERLAYS_SERVER_CONFIG.
 Docs: ${REPO_URL}
 `;
 
@@ -59,6 +64,8 @@ function parseCli() {
       'ddpai-http-port': { type: 'string' },
       simulate: { type: 'boolean' },
       'log-level': { type: 'string' },
+      'log-dir': { type: 'string' },
+      'no-log-file': { type: 'boolean' },
       'print-config': { type: 'boolean' },
       'list-drivers': { type: 'boolean' },
       probe: { type: 'string' },
@@ -80,11 +87,14 @@ function buildConfig(args: CliValues, warn: (m: string) => void): { config: AppC
     ...(env.OVERLAYS_SERVER_PORT && { port: env.OVERLAYS_SERVER_PORT }),
     ...(env.OVERLAYS_SERVER_HOST && { host: env.OVERLAYS_SERVER_HOST }),
     ...(env.OVERLAYS_SERVER_LOG_LEVEL && { logLevel: env.OVERLAYS_SERVER_LOG_LEVEL }),
+    ...(env.OVERLAYS_SERVER_LOG_DIR && { logDir: env.OVERLAYS_SERVER_LOG_DIR }),
     ...(args.port && { port: args.port }),
     ...(args.host && { host: args.host }),
     ...(args.token && { token: args.token }),
     ...((args['tls-cert'] || args['tls-key']) && { tls: { certFile: args['tls-cert'], keyFile: args['tls-key'] } }),
     ...(args['log-level'] && { logLevel: args['log-level'] }),
+    ...(args['log-dir'] && { logDir: args['log-dir'] }),
+    ...(args['no-log-file'] && { logToFile: false }),
   };
   const config = parseConfig({ ...raw, ...overrides }, warn);
   if (args.origin?.length) config.allowedOrigins = [...config.allowedOrigins, ...args.origin];
@@ -105,6 +115,9 @@ function buildConfig(args: CliValues, warn: (m: string) => void): { config: AppC
   }
   return { config, file };
 }
+
+/** Set once the server runs with log files: fatal errors go there too. */
+let logFile: LogFile | undefined;
 
 async function main(): Promise<number> {
   let args: CliValues;
@@ -141,10 +154,25 @@ async function main(): Promise<number> {
     return 0;
   }
 
-  const log = createLogger(config.logLevel as LogLevel);
+  const consoleLog = createLogger(config.logLevel as LogLevel);
+  if (config.logToFile) {
+    logFile = new LogFile({
+      dir: config.logDir,
+      keepDays: config.logKeepDays,
+      onError: (m) => consoleLog.warn(m),
+    });
+    logFile.push('info', `===== overlays-server ${VERSION} started: node ${process.version}, ${process.platform} ${os.release()} ${process.arch}, UTC${utcOffset()} =====`);
+    process.on('uncaughtException', (err) => {
+      logFile?.push('error', `crashed: ${err.stack ?? err.message}`);
+      console.error(err);
+      process.exit(1);
+    });
+  }
+  const log = logFile ? recordingLogger(consoleLog, logFile) : consoleLog;
   for (const w of warnings) log.warn(w);
   log.info(`overlays-server ${VERSION} (node ${process.version})`);
   log.info(file ? `config: ${file}` : 'config: defaults (no config file found)');
+  if (logFile) log.info(`log files:     ${logFile.dir}`);
 
   const server = await startServer({ config, log });
   log.info(`status page:   ${server.url}/`);
@@ -161,6 +189,8 @@ async function main(): Promise<number> {
   };
   process.on('SIGINT', () => shutdown('SIGINT'));
   process.on('SIGTERM', () => shutdown('SIGTERM'));
+  // Windows: the console window was closed (Node is killed a few seconds later).
+  process.on('SIGHUP', () => shutdown('SIGHUP (window closed)'));
   return -1; // keep running
 }
 
@@ -169,6 +199,7 @@ main().then(
     if (code >= 0) process.exitCode = code;
   },
   (err) => {
+    logFile?.push('error', err instanceof Error && !(err instanceof ConfigError) ? (err.stack ?? err.message) : errorMessage(err));
     if (err instanceof ConfigError) {
       console.error(`error: ${err.message}`);
     } else {
@@ -177,3 +208,9 @@ main().then(
     process.exitCode = 1;
   },
 );
+
+function utcOffset(): string {
+  const minutes = -new Date().getTimezoneOffset();
+  const abs = Math.abs(minutes);
+  return `${minutes < 0 ? '-' : '+'}${String(Math.floor(abs / 60)).padStart(2, '0')}:${String(abs % 60).padStart(2, '0')}`;
+}

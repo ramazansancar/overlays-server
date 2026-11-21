@@ -109,9 +109,13 @@ body:
   - type: textarea
     id: logs
     attributes:
-      label: Logs (`--log-level debug`)
+      label: Logs / Log dosyası
       value: |
         <!--
+        Best: attach the day's log file (drag & drop; rename to .txt if refused). En iyisi: o günün log dosyasını ekle.
+          start.cmd: logsoverlays-server-YYYY-MM-DD.log next to start.cmd / start.cmd'nin yanındaki logs klasörü
+          npm / npx: %APPDATA%overlays-serverlogs  (Linux / macOS: ~/.config/overlays-server/logs)
+        Or paste the console:
         npx overlays-server@latest --log-level debug      (git: npm start -- --log-level debug)
         For overlay problems in OBS: Help → Log Files → View Current Log, search for "overlays" or "WebSocket".
         OBS: Yardım → Günlük Dosyaları → Geçerli Günlüğü Görüntüle.

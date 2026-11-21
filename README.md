@@ -149,7 +149,10 @@ The server looks for it in this order:
 | `staleAfterMs` | `5000` | A source without GPS for this long is `stale` |
 | `gpsPriority` | `[]` | Preference order with several GPS sources (falls back when the first drops) |
 | `motionMaxHz` | `10` | Maximum acceleration messages per client per second |
-| `logLevel` | `info` | `debug`, `info`, `warn`, `error`, `silent` |
+| `logLevel` | `info` | `debug`, `info`, `warn`, `error`, `silent` (console) |
+| `logToFile` | `true` | Write daily log files (every level, personal data masked) |
+| `logDir` | `logs` in the user folder; `start.cmd`: `logs` next to it | Folder for the log files |
+| `logKeepDays` | `14` | Days of log files to keep |
 | `rememberLastPosition` | `true` | Keep the last position on disk; show it while GPS is lost (tunnel) or after a restart |
 | `stateFile` | `last-position.json` in the user folder | Where the last position is kept |
 | `sources` | `[{ "driver": "ddpai" }]` | List of sources; each has `id`, `driver`, `enabled`, `options` |
@@ -172,6 +175,8 @@ overlays-server [options]
       --ddpai-http-port <port> DDPAI HTTP API port (default 80)
       --simulate              Use the simulator instead of the configured sources
       --log-level <level>     debug | info | warn | error | silent
+      --log-dir <folder>      Folder for the daily log files
+      --no-log-file           Do not write log files
       --print-config          Print the effective config and exit
       --list-drivers          List drivers and exit
       --probe <address>       Inspect a device (ports, model, data samples) and print a report for an issue
@@ -179,7 +184,8 @@ overlays-server [options]
   -v, --version / -h, --help
 ```
 
-Environment variables: `OVERLAYS_SERVER_PORT`, `OVERLAYS_SERVER_HOST`, `OVERLAYS_SERVER_LOG_LEVEL`, `OVERLAYS_SERVER_CONFIG`.
+Environment variables: `OVERLAYS_SERVER_PORT`, `OVERLAYS_SERVER_HOST`, `OVERLAYS_SERVER_LOG_LEVEL`,
+`OVERLAYS_SERVER_LOG_DIR`, `OVERLAYS_SERVER_CONFIG`.
 
 ## Endpoints
 
@@ -208,6 +214,14 @@ replay the problem exactly on our machine and fix it. Wi-Fi passwords, serial nu
 removed; the position only when **Include my position** is ticked (needed for map / position problems). From the
 command line: `curl -o diagnostics.json http://127.0.0.1:3456/v1/diagnostics`. The overlay settings page offers the
 same download (with the local server selected as location source), named with the date and time.
+
+**Log files: what happened during the whole stream.** The server writes one file per day,
+`overlays-server-YYYY-MM-DD.log`, with every line from the console plus details (`debug`): connections, GPS lost /
+back, device model and firmware, samples of device messages the server does not know yet. With `start.cmd` they are in
+the `logs` folder next to it; otherwise in `%APPDATA%overlays-serverlogs` (Linux / macOS:
+`~/.config/overlays-server/logs`); the folder is printed at start (`log files:`). Positions, Wi-Fi credentials,
+serials, MACs and your user name are masked. Files older than 14 days are deleted. Attach the day's file to a bug
+report (rename to `.txt` if GitHub refuses it).
 
 **Status page says `connecting` / "is this PC connected to the camera Wi-Fi?"** — the PC is not on the camera's Wi-Fi,
 or Windows sends `193.168.0.1` to the wrong adapter. [docs/windows-network.md](docs/windows-network.md).

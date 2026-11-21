@@ -5,6 +5,16 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Log files: one per day (`overlays-server-YYYY-MM-DD.log`) with every level including `debug`, positions, Wi-Fi
+  credentials, serials, MACs and the user name masked; 14 days kept, 20 MB a day at most. `start.cmd` keeps them in
+  `logs` next to itself, otherwise the per-user folder. `logToFile`, `logDir`, `logKeepDays`, `--log-dir`,
+  `--no-log-file`, `OVERLAYS_SERVER_LOG_DIR`. Crashes and the console window being closed are logged too.
+- Device model / firmware logged when first read or changed.
+- Unknown device message types: up to 20 distinct samples per type in the log file (`debug`), so a report from the
+  field shows what the message carries.
+
 ## [0.1.1] - 2026-11-21
 
 No changes to how the server runs; maintenance release.

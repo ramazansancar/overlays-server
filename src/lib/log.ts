@@ -45,8 +45,13 @@ export function createLogger(level: LogLevel = 'info', sink: LogSink = consoleSi
 
 export const silentLogger: Logger = createLogger('silent');
 
+/** Where a recording logger copies its lines: the in-memory buffer, a log file. */
+export interface LogRecorder {
+  push(level: string, message: string): void;
+}
+
 /** The last N log lines in memory, for the diagnostics download. */
-export class LogBuffer {
+export class LogBuffer implements LogRecorder {
   private readonly lines: string[] = [];
   readonly capacity: number;
 
@@ -66,10 +71,10 @@ export class LogBuffer {
 }
 
 /**
- * Wraps a logger so every line it prints (same level filter) is also kept in `buffer`.
- * Lines below the base logger's level are recorded too at `debug`, so a diagnostics file has more than the console.
+ * Wraps a logger so every line it prints is also kept in `buffer`. Lines below the base logger's level are recorded
+ * too, so a diagnostics or log file has more than the console.
  */
-export function recordingLogger(base: Logger, buffer: LogBuffer, scope?: string): Logger {
+export function recordingLogger(base: Logger, buffer: LogRecorder, scope?: string): Logger {
   const prefix = scope ? `[${scope}] ` : '';
   const wrap =
     (level: 'debug' | 'info' | 'warn' | 'error') =>

@@ -67,6 +67,10 @@ probe çıktısını yapıştır. Form, cihaz bilgisini nasıl bulacağını ad�
 
 Probe çalışmazsa formdaki PowerShell / curl komutlarıyla da bilgi toplayabilirsin.
 
+Sunucu çalışırken konsolda `new message type ...` görürsen (tanımadığı bir cihaz mesajı), o günün log dosyasını da
+ekle: mesajın örnekleri orada (`start.cmd` ile yanındaki `logs` klasörü, diğer durumlarda
+`%APPDATA%overlays-serverlogs`). Konum ve gizli alanlar dosyada zaten gizli.
+
 ## 5. Sonrası
 
 Rapordan cihazın canlı konum verip vermediği anlaşılır:
@@ -91,4 +95,8 @@ yol; örnek: `scripts/lib/fake-ddpai.ts`.
    credentials, serials and MACs.
 4. Paste the report into a
    [device report](https://github.com/ramazansancar/overlays-server/issues/new?template=device-report.yml).
+   A `new message type ...` line on the console (a message the server does not know): attach that day's log file
+   too (`logs` next to `start.cmd`, otherwise `%APPDATA%overlays-serverlogs` / `~/.config/overlays-server/logs`); it
+   holds samples of the message, masked.
+
 Writing the driver yourself: [drivers.md](drivers.md).

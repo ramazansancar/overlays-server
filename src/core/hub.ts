@@ -184,7 +184,13 @@ export class Hub {
   private setDevice(id: string, device: DeviceInfo): void {
     const entry = this.entries.get(id);
     if (!entry) return;
-    if (JSON.stringify(entry.status.device) === JSON.stringify(device)) return;
+    const prev = entry.status.device;
+    if (JSON.stringify(prev) === JSON.stringify(device)) return;
+    if (prev?.model !== device.model || prev?.firmware !== device.firmware || prev?.name !== device.name) {
+      const what = [device.vendor, device.model ?? device.name].filter(Boolean).join(' ') || 'unknown model';
+      this.log.info(`${id}: device ${what}${device.firmware ? `, firmware ${device.firmware}` : ''}`);
+      this.log.debug(`${id}: device info`, device);
+    }
     entry.status = { ...entry.status, device };
     this.emit({ kind: 'status', snapshot: this.toSnapshot(entry) });
   }

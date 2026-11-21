@@ -40,6 +40,15 @@ export interface AppConfig {
   motionMaxHz: number;
   logLevel: LogLevel;
   /**
+   * Write log files (CLI only): one per day in `logDir`, every level including debug, personal data masked.
+   * A streamer sends these with a problem report.
+   */
+  logToFile: boolean;
+  /** Default: `logs` next to the per-user config; `start.cmd` uses `logs` next to itself. */
+  logDir: string;
+  /** Days of log files to keep. */
+  logKeepDays: number;
+  /**
    * Keep each source's last position on disk so it survives restarts while GPS is lost (tunnels).
    * Stored in `stateFile` (default: next to the per-user config).
    */
@@ -76,6 +85,9 @@ export function parseConfig(raw: unknown, onWarning: (message: string) => void =
     gpsPriority: o.stringList('gpsPriority', []),
     motionMaxHz: o.number('motionMaxHz', 10, { min: 0, max: 100 }),
     logLevel: o.oneOf('logLevel', LOG_LEVELS, 'info'),
+    logToFile: o.boolean('logToFile', true),
+    logDir: o.string('logDir', userLogDir()),
+    logKeepDays: o.number('logKeepDays', 14, { min: 1, integer: true }),
     rememberLastPosition: o.boolean('rememberLastPosition', true),
     stateFile: o.string('stateFile', userStatePath()),
     sources: o.has('sources') ? parseSources(o.raw('sources')) : structuredClone(DEFAULT_SOURCES),
@@ -124,6 +136,11 @@ export function userConfigPath(): string {
 /** Per-user file for the remembered last positions. */
 export function userStatePath(): string {
   return path.join(path.dirname(userConfigPath()), 'last-position.json');
+}
+
+/** Per-user folder for the log files. */
+export function userLogDir(): string {
+  return path.join(path.dirname(userConfigPath()), 'logs');
 }
 
 /**

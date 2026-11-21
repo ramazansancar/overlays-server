@@ -148,7 +148,10 @@ Varsayılanlar çoğu kurulum için yeterli. Değiştirmek için bir JSON dosyas
 | `staleAfterMs` | `5000` | Bu kadar süre GPS gelmezse durum `stale` olur |
 | `gpsPriority` | `[]` | Birden fazla GPS kaynağı varsa tercih sırası (ilk sıradaki koparsa sonrakine geçer) |
 | `motionMaxHz` | `10` | İstemci başına saniyedeki en fazla ivme mesajı |
-| `logLevel` | `info` | `debug`, `info`, `warn`, `error`, `silent` |
+| `logLevel` | `info` | `debug`, `info`, `warn`, `error`, `silent` (konsol) |
+| `logToFile` | `true` | Günlük log dosyası yaz (tüm seviyeler, kişisel veri gizli) |
+| `logDir` | kullanıcı klasöründe `logs`; `start.cmd` ile yanındaki `logs` | Log dosyalarının klasörü |
+| `logKeepDays` | `14` | Log dosyalarının saklanacağı gün sayısı |
 | `rememberLastPosition` | `true` | Son konumu diske yaz; GPS yokken (tünel) ya da yeniden başlatmadan sonra onu göster |
 | `stateFile` | kullanıcı klasöründe `last-position.json` | Son konumun saklandığı dosya |
 | `sources` | `[{ "driver": "ddpai" }]` | Kaynak listesi; her biri `id`, `driver`, `enabled`, `options` |
@@ -171,6 +174,8 @@ overlays-server [seçenekler]
       --ddpai-http-port <port> DDPAI HTTP API portu (varsayılan 80)
       --simulate              Kaynak yerine simülatörü kullan
       --log-level <seviye>    debug | info | warn | error | silent
+      --log-dir <klasör>      Günlük log dosyalarının klasörü
+      --no-log-file           Log dosyası yazma
       --print-config          Geçerli ayarları yazdır ve çık
       --list-drivers          Sürücüleri listele ve çık
       --probe <adres>         Cihazı incele (portlar, model, veri örnekleri), issue için rapor yazdır
@@ -178,7 +183,8 @@ overlays-server [seçenekler]
   -v, --version / -h, --help
 ```
 
-Ortam değişkenleri: `OVERLAYS_SERVER_PORT`, `OVERLAYS_SERVER_HOST`, `OVERLAYS_SERVER_LOG_LEVEL`, `OVERLAYS_SERVER_CONFIG`.
+Ortam değişkenleri: `OVERLAYS_SERVER_PORT`, `OVERLAYS_SERVER_HOST`, `OVERLAYS_SERVER_LOG_LEVEL`,
+`OVERLAYS_SERVER_LOG_DIR`, `OVERLAYS_SERVER_CONFIG`.
 
 ## Uç noktalar
 
@@ -206,6 +212,14 @@ kendi bilgisayarımızda aynen tekrar oynatıp düzeltebiliyoruz. Wi-Fi şifresi
 gizlenir; konum yalnızca **Konumu dahil et** işaretliyse eklenir (harita/konum sorunlarında gerekli). Komut satırından:
 `curl.exe -o tani.json http://127.0.0.1:3456/v1/diagnostics`. Aynı dosya overlay ayar sayfasından da (konum kaynağı
 *Araç kamerası GPS — overlays-server [yerel]* seçiliyken **Tanı verisini indir**) tarihli adla indirilebilir.
+
+**Log dosyaları: yayın boyunca ne olduğu.** Sunucu her gün için bir dosya yazar,
+`overlays-server-YYYY-AA-GG.log`: konsoldaki her satır ve ayrıntılar (`debug`): bağlantılar, GPS kopması / gelmesi,
+cihaz modeli ve yazılımı, sunucunun henüz tanımadığı cihaz mesajlarından örnekler. `start.cmd` ile yanındaki `logs`
+klasöründe; diğer durumlarda `%APPDATA%overlays-serverlogs` (Linux / macOS: `~/.config/overlays-server/logs`).
+Klasör açılışta yazılır (`log files:`). Konum, Wi-Fi bilgileri, seri numaraları, MAC adresleri ve kullanıcı adın
+gizlenir. 14 günden eski dosyalar silinir. Hata bildirirken o günün dosyasını ekle (GitHub kabul etmezse uzantıyı
+`.txt` yap).
 
 **Durum sayfasında `connecting` / "is this PC connected to the camera Wi-Fi?"** — Bilgisayar kameranın Wi-Fi'ına
 bağlı değil ya da Windows `193.168.0.1`'i yanlış arayüze yolluyor. [docs/windows-network.md](docs/windows-network.md).

@@ -31,7 +31,9 @@ In scope:
   access from the internet use TLS (`tls` option or a reverse proxy), see [docs/remote.md](docs/remote.md).
 - **Optional token** compared in constant time.
 - **Last position on disk.** To survive restarts while GPS is lost, the last position of each source is kept in the
-  user's own profile folder (`last-position.json`, `rememberLastPosition: false` turns it off). Nothing else is stored.
+  user's own profile folder (`last-position.json`, `rememberLastPosition: false` turns it off).
+- **Log files.** Daily log files (`logs` folder, 14 days, `logToFile: false` turns them off) mask positions, Wi-Fi
+  credentials, serials, MACs and the home folder (user name). Nothing else is stored.
 - **Read-only towards devices.** Drivers never send commands that change device settings.
 - **Secrets from devices.** DDPAI's `API_GetBaseInfo` returns the Wi-Fi password, serial numbers and MAC
   addresses in plain text. Those fields are dropped by name; only non-secret fields (model, firmware, memory card, ...)

@@ -12,13 +12,16 @@ import { VERSION } from '../src/version.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const CLI = path.join(ROOT, 'src', 'cli.ts');
+/** Log files of the CLI runs go here, not to the user's profile. */
+const LOG_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'ovs-cli-logs-'));
+after(() => fs.rmSync(LOG_DIR, { recursive: true, force: true }));
 
 function run(args: string[], env: Record<string, string> = {}) {
   const r = spawnSync(process.execPath, [CLI, ...args], {
     cwd: ROOT,
     encoding: 'utf8',
     timeout: 20_000,
-    env: { ...process.env, OVERLAYS_SERVER_CONFIG: '', ...env },
+    env: { ...process.env, OVERLAYS_SERVER_CONFIG: '', OVERLAYS_SERVER_LOG_DIR: LOG_DIR, ...env },
   });
   return { code: r.status, out: r.stdout, err: r.stderr };
 }
@@ -26,7 +29,7 @@ function run(args: string[], env: Record<string, string> = {}) {
 /** Starts the CLI and resolves once it prints the status page URL. */
 function startCli(args: string[], env: Record<string, string> = {}): Promise<{ child: ChildProcess; url: string; output: () => string }> {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [CLI, ...args], { cwd: ROOT, env: { ...process.env, OVERLAYS_SERVER_CONFIG: '', ...env } });
+    const child = spawn(process.execPath, [CLI, ...args], { cwd: ROOT, env: { ...process.env, OVERLAYS_SERVER_CONFIG: '', OVERLAYS_SERVER_LOG_DIR: LOG_DIR, ...env } });
     let output = '';
     const timer = setTimeout(() => reject(new Error(`no start within 15 s:\n${output}`)), 15_000);
     const onData = (chunk: Buffer) => {
@@ -58,7 +61,7 @@ describe('CLI', () => {
     assert.equal(run(['-v']).out.trim(), VERSION);
     const help = run(['--help']);
     assert.equal(help.code, 0);
-    for (const flag of ['--config', '--port', '--simulate', '--probe', '--allowed-host', '--tls-cert', '--ddpai-host']) assert.ok(help.out.includes(flag), flag);
+    for (const flag of ['--config', '--port', '--simulate', '--probe', '--allowed-host', '--tls-cert', '--ddpai-host', '--log-dir', '--no-log-file']) assert.ok(help.out.includes(flag), flag);
     const drivers = run(['--list-drivers']).out;
     assert.match(drivers, /^ddpai\s/m);
     assert.match(drivers, /^simulator\s/m);
@@ -114,8 +117,25 @@ describe('CLI', () => {
       assert.equal(health.version, VERSION);
       assert.match(output(), /config: defaults \(no config file found\)|config: /);
       assert.match(output(), /overlay feed:\s+ws:\/\/127\.0\.0\.1:\d+\/v1\/ws/);
+      assert.match(output(), /log files:\s+\S/);
     } finally {
       child.kill();
+    }
+    const logFile = fs.readdirSync(LOG_DIR).find((f) => /^overlays-server-\d{4}-\d{2}-\d{2}\.log$/.test(f));
+    assert.ok(logFile, 'a log file was written');
+    const text = fs.readFileSync(path.join(LOG_DIR, logFile), 'utf8');
+    assert.ok(text.includes(`===== overlays-server ${VERSION} started: node v`), text);
+    assert.match(text, /INFO {2}status page:/);
+  });
+
+  it('--no-log-file writes none; --log-dir picks the folder', async () => {
+    const none = path.join(dir, 'none');
+    const own = path.join(dir, 'own');
+    for (const [args, folder] of [[['--no-log-file'], none], [['--log-dir', own], own]] as const) {
+      const { child } = await startCli(['--simulate', '--port', '0', ...args], { OVERLAYS_SERVER_LOG_DIR: none });
+      child.kill();
+      await new Promise((r) => child.once('exit', r));
+      assert.equal(fs.existsSync(folder), folder === own, folder);
     }
   });
 
@@ -154,6 +174,14 @@ describe('start.cmd (Windows)', { skip: process.platform !== 'win32' && 'Windows
     const r = cmd(['--version'], ROOT, { OVERLAYS_SERVER_NO_UPDATE: '1' });
     assert.match(r.stdout, new RegExp(VERSION.replace(/\./g, '\\.')));
     assert.ok(!/git pull/.test(r.stdout));
+  });
+
+  it('keeps the log files in logs\\ next to itself', () => {
+    const env: NodeJS.ProcessEnv = { ...process.env, OVERLAYS_SERVER_NO_UPDATE: '1', OVERLAYS_SERVER_CONFIG: '' };
+    delete env.OVERLAYS_SERVER_LOG_DIR;
+    const r = spawnSync('cmd.exe', ['/d', '/c', path.join(ROOT, 'start.cmd'), '--print-config'], { cwd: ROOT, encoding: 'utf8', input: '\r\n', timeout: 60_000, env });
+    const json = r.stdout.slice(r.stdout.indexOf('{'), r.stdout.lastIndexOf('}') + 1);
+    assert.equal((JSON.parse(json) as { logDir: string }).logDir, path.join(ROOT, 'logs'));
   });
 
   it('pulls an update, restarts itself with the new start.cmd and skips npm install when deps did not change', () => {

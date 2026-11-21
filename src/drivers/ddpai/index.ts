@@ -25,6 +25,9 @@ export interface DdpaiOptions {
   idleTimeoutMs: number;
 }
 
+const MAX_SAMPLES_PER_TYPE = 20;
+const MAX_SAMPLE = 2000;
+
 export const ddpaiDriver = defineDriver<DdpaiOptions>({
   id: 'ddpai',
   name: 'DDPAI dashcam',
@@ -45,7 +48,8 @@ export const ddpaiDriver = defineDriver<DdpaiOptions>({
 
   create(ctx, options) {
     const decoder = new DelimitedDecoder({ delimiter: 0x00 });
-    const unknownSeen = new Set<string>();
+    /** Message types the server does not know, with the distinct payloads logged so far. */
+    const unknownSeen = new Map<string, Set<string>>();
 
     let infoTimer: NodeJS.Timeout | undefined;
     const loadDeviceInfo = () => {
@@ -80,14 +84,23 @@ export const ddpaiDriver = defineDriver<DdpaiOptions>({
         case 'gsensor':
           if (options.motion) ctx.publishMotion(msg.sample);
           break;
-        case 'other':
-          // Logged once per type: helps map the rest of the protocol (ADAS, alerts, ...).
-          if (!unknownSeen.has(msg.msgid)) {
-            unknownSeen.add(msg.msgid);
-            ctx.log.info(`new message type ${msg.msgid} (please report it: docs/new-device.md)`);
+        case 'other': {
+          // Helps map the rest of the protocol (ADAS, alerts, ...): the type once on the console, its distinct
+          // payloads in the log file (debug), a few per type.
+          let payloads = unknownSeen.get(msg.msgid);
+          if (!payloads) {
+            payloads = new Set();
+            unknownSeen.set(msg.msgid, payloads);
+            ctx.log.info(`new message type ${msg.msgid} (please report it with the log file: docs/new-device.md)`);
+          }
+          const sample = frame.length > MAX_SAMPLE ? `${frame.slice(0, MAX_SAMPLE)}...` : frame;
+          if (payloads.size < MAX_SAMPLES_PER_TYPE && !payloads.has(sample)) {
+            payloads.add(sample);
+            ctx.log.debug(`${msg.msgid} sample ${payloads.size}/${MAX_SAMPLES_PER_TYPE}: ${sample}`);
           }
           if (options.events) ctx.publishEvent({ name: msg.msgid, data: msg.data, timestamp: Date.now() });
           break;
+        }
       }
     };
 
