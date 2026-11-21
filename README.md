@@ -67,9 +67,11 @@ npm install --omit=dev      # ya da: pnpm install --prod
 npm start
 ```
 
-Windows'ta klasördeki **`start.cmd`** dosyasına çift tıklamak da yeterli (gerekirse bağımlılıkları kendisi kurar).
+Windows'ta klasördeki **`start.cmd`** dosyasına çift tıklamak da yeterli: her açılışta önce `git pull` ile kendini
+günceller, gerekirse bağımlılıkları kurar, sonra sunucuyu başlatır. İnternet yoksa uyarı verip mevcut sürümle açılır;
+otomatik güncellemeyi kapatmak için `set OVERLAYS_SERVER_NO_UPDATE=1`.
 
-**Güncelleme (git kurulumu):**
+**Güncelleme (git kurulumu):** `start.cmd` kullanıyorsan bir şey yapmana gerek yok. Elle:
 
 ```bash
 cd overlays-server

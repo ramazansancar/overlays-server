@@ -16,7 +16,9 @@ and the project uses [Semantic Versioning](https://semver.org/).
 - `simulator` driver for development without hardware.
 - Security: loopback-only by default, origin allowlist, Host header check (DNS rebinding), optional token.
 - Config file with defaults, environment variables and CLI flags; `--simulate`, `--print-config`, `--list-drivers`.
-- Run from a git clone (`npm start`, `start.cmd`, no build step) or from npm (`npx overlays-server`).
+- Run from a git clone (`npm start`, `start.cmd`, no build step) or from npm (`npx overlays-server`). `start.cmd`
+  updates itself with `git pull --ff-only` before starting (`OVERLAYS_SERVER_NO_UPDATE=1` to skip) and reinstalls
+  dependencies when they changed.
 - Programmatic API (`import { startServer, defineDriver } from 'overlays-server'`).
 - Fake DDPAI camera for development and tests; `pnpm dev` runs the server against it (`--no-fix`, `--speed`,
   `--drop-every`), or in two terminals `pnpm dev:fake-camera` + `pnpm dev:server`. `--ddpai-http-port` flag.
