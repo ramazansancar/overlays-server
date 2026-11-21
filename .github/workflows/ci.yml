@@ -26,10 +26,33 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
-      - run: pnpm test
+      # Unit, integration and process-level end-to-end tests (CLI; start.cmd on Windows).
+      - run: pnpm test:coverage
       - run: pnpm build
       - name: Smoke test the built CLI
         run: node dist/cli.js --version
       - name: Check the npm package contents
         if: matrix.os == 'ubuntu-latest' && matrix.node == 24
         run: npm pack --dry-run
+      - name: Dependency audit
+        if: matrix.os == 'ubuntu-latest' && matrix.node == 24
+        run: pnpm audit --prod
+
+  e2e:
+    name: Browser tests (status page)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-results
+          path: test-results/

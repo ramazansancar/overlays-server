@@ -12,3 +12,7 @@ overlays-server.config.json
 recordings/
 .env
 .env.*
+
+# Playwright
+test-results/
+playwright-report/

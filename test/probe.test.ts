@@ -55,6 +55,32 @@ describe('probe', () => {
     assert.match(text, /xxxx\.xxxx,N/);
   });
 
+  it('recognises an RTSP server (and its name) on any port, and a silent port', async () => {
+    const net = await import('node:net');
+    const rtspServer = net.createServer((socket) => {
+      socket.on('data', (d) => {
+        if (String(d).startsWith('OPTIONS')) socket.end('RTSP/1.0 200 OK\r\nCSeq: 1\r\nServer: LIVE555 Streaming Media\r\n\r\n');
+        else socket.end('garbage');
+      });
+    });
+    const silent = net.createServer(() => {});
+    await new Promise<void>((r) => rtspServer.listen(0, '127.0.0.1', r));
+    await new Promise<void>((r) => silent.listen(0, '127.0.0.1', r));
+    const rtspPort = (rtspServer.address() as import('node:net').AddressInfo).port;
+    const silentPort = (silent.address() as import('node:net').AddressInfo).port;
+    try {
+      const report = await probeDevice('127.0.0.1', { ports: [rtspPort, silentPort], listenMs: 200, connectTimeoutMs: 500 });
+      const rtspReport = report.ports.find((p) => p.port === rtspPort);
+      assert.equal(rtspReport?.kind, 'rtsp');
+      assert.equal(rtspReport?.server, 'LIVE555 Streaming Media');
+      assert.equal(report.ports.find((p) => p.port === silentPort)?.kind, 'silent');
+      assert.match(formatProbeReport(report), /\| rtsp \| RTSP\/1\.0 200 OK; server: LIVE555/);
+    } finally {
+      rtspServer.close();
+      silent.close();
+    }
+  });
+
   it('reports a host without open ports', async () => {
     const report = await probeDevice('127.0.0.1', { ports: [9], listenMs: 100, connectTimeoutMs: 300 });
     assert.deepEqual(report.openPorts, []);
