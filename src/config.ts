@@ -25,6 +25,13 @@ export interface AppConfig {
   allowedOrigins: string[];
   /** Optional shared secret: clients must send `?token=` (or `Authorization: Bearer`). */
   token?: string;
+  /**
+   * Extra Host names accepted while listening on loopback (DNS rebinding guard), for a reverse proxy in front of the
+   * server: Tailscale Serve (`pi.tailnet-name.ts.net`), Caddy, Nginx. Not needed when listening on a LAN/VPN address.
+   */
+  allowedHosts: string[];
+  /** Serve HTTPS / WSS directly (PEM files), e.g. a `tailscale cert` or Let's Encrypt certificate. */
+  tls?: { certFile: string; keyFile: string };
   /** A GPS source that goes quiet this long is reported `stale`. */
   staleAfterMs: number;
   /** Source ids in preference order for the default GPS stream. */
@@ -63,6 +70,8 @@ export function parseConfig(raw: unknown, onWarning: (message: string) => void =
     port: o.port('port', DEFAULT_PORT),
     allowedOrigins: o.stringList('allowedOrigins', DEFAULT_ALLOWED_ORIGINS),
     ...(token && { token }),
+    allowedHosts: o.stringList('allowedHosts', []).map((h) => h.trim().toLowerCase()).filter(Boolean),
+    ...parseTls(o.raw('tls')),
     staleAfterMs: o.number('staleAfterMs', 5000, { min: 500, integer: true }),
     gpsPriority: o.stringList('gpsPriority', []),
     motionMaxHz: o.number('motionMaxHz', 10, { min: 0, max: 100 }),
@@ -73,6 +82,15 @@ export function parseConfig(raw: unknown, onWarning: (message: string) => void =
   };
   for (const key of o.unknownKeys()) onWarning(`config: unknown key "${key}" ignored`);
   return config;
+}
+
+function parseTls(raw: unknown): { tls?: { certFile: string; keyFile: string } } {
+  if (raw === undefined || raw === null) return {};
+  const o = new OptionReader(raw, 'config.tls');
+  const certFile = o.string('certFile');
+  const keyFile = o.string('keyFile');
+  if (!certFile || !keyFile) throw new ConfigError('config.tls: needs both certFile and keyFile');
+  return { tls: { certFile, keyFile } };
 }
 
 function parseSources(raw: unknown): SourceConfig[] {

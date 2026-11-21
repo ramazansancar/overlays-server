@@ -33,6 +33,8 @@ export interface FakeDdpaiOptions {
    * in a loop. The frames are sent exactly as recorded.
    */
   replay?: { t: number; frame: string }[];
+  /** Fields merged over the fake API_GetBaseInfo reply (tests: odd or hostile device strings). */
+  baseInfo?: Record<string, unknown>;
 }
 
 export interface FakeDdpai {
@@ -189,6 +191,7 @@ export async function startFakeDdpai(options: FakeDdpaiOptions = {}): Promise<Fa
         delrec: 1,
         downstoprec: 1,
         upgrade_key: 'do-not-leak',
+        ...options.baseInfo,
       });
     }
     if (cmd === 'API_GetGpsState') return reply({ gpsstate: noFix ? 0 : 2, signal: 1 });

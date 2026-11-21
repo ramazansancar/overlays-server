@@ -1,26 +1,29 @@
 import { timingSafeEqual } from 'node:crypto';
 import type { IncomingMessage } from 'node:http';
 
-const LOOPBACK_HOSTS = new Set(['127.0.0.1', 'localhost', '::1', '[::1]']);
+const LOOPBACK_HOSTS = new Set(['localhost', '::1', '[::1]']);
+/** 127.0.0.0/8 as an IPv4 literal only: "127.0.0.1.attacker.example" is a DNS name, not loopback. */
+const LOOPBACK_V4 = /^127(?:\.(?:25[0-5]|2[0-4]\d|1?\d?\d)){3}$/;
 
 export function isLoopbackHost(host: string): boolean {
-  return LOOPBACK_HOSTS.has(host) || host.startsWith('127.');
+  return LOOPBACK_HOSTS.has(host.toLowerCase()) || LOOPBACK_V4.test(host);
 }
 
 /**
  * DNS rebinding guard: while listening on loopback only requests addressed to a loopback name are
  * answered. Otherwise a malicious site could point its own domain at 127.0.0.1 and read us same-origin.
  */
-export function hostHeaderAllowed(hostHeader: string | undefined, listenHost: string): boolean {
+export function hostHeaderAllowed(hostHeader: string | undefined, listenHost: string, allowedHosts: readonly string[] = []): boolean {
   if (!isLoopbackHost(listenHost)) return true;
   if (!hostHeader) return false;
   let hostname: string;
   try {
-    hostname = new URL(`http://${hostHeader}`).hostname;
+    hostname = new URL(`http://${hostHeader}`).hostname.toLowerCase();
   } catch {
     return false;
   }
-  return isLoopbackHost(hostname);
+  // A reverse proxy (Tailscale Serve, Caddy) forwards its own public name; only names listed in the config pass.
+  return isLoopbackHost(hostname) || allowedHosts.includes(hostname);
 }
 
 /**

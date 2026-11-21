@@ -20,6 +20,9 @@ Options:
       --host <address>     Interface to listen on (default 127.0.0.1)
       --origin <origin>    Extra allowed web origin (repeatable), e.g. https://example.com
       --token <secret>     Require ?token=<secret> from clients
+      --allowed-host <name> Extra Host name behind a reverse proxy (repeatable), e.g. pi.tailnet.ts.net
+      --tls-cert <file>    Serve HTTPS/WSS with this PEM certificate (needs --tls-key)
+      --tls-key <file>     PEM private key for --tls-cert
       --ddpai-host <ip>    DDPAI camera address (default 193.168.0.1)
       --ddpai-http-port <port>  DDPAI HTTP API port (default 80)
       --simulate           Use the built-in simulator instead of the configured sources
@@ -49,6 +52,9 @@ function parseCli() {
       host: { type: 'string' },
       origin: { type: 'string', multiple: true },
       token: { type: 'string' },
+      'allowed-host': { type: 'string', multiple: true },
+      'tls-cert': { type: 'string' },
+      'tls-key': { type: 'string' },
       'ddpai-host': { type: 'string' },
       'ddpai-http-port': { type: 'string' },
       simulate: { type: 'boolean' },
@@ -77,10 +83,12 @@ function buildConfig(args: CliValues, warn: (m: string) => void): { config: AppC
     ...(args.port && { port: args.port }),
     ...(args.host && { host: args.host }),
     ...(args.token && { token: args.token }),
+    ...((args['tls-cert'] || args['tls-key']) && { tls: { certFile: args['tls-cert'], keyFile: args['tls-key'] } }),
     ...(args['log-level'] && { logLevel: args['log-level'] }),
   };
   const config = parseConfig({ ...raw, ...overrides }, warn);
   if (args.origin?.length) config.allowedOrigins = [...config.allowedOrigins, ...args.origin];
+  if (args['allowed-host']?.length) config.allowedHosts = [...config.allowedHosts, ...args['allowed-host'].map((h) => h.toLowerCase())];
   if (args.simulate) {
     config.sources = [{ id: 'simulator', driver: 'simulator', enabled: true, options: {} }];
   }

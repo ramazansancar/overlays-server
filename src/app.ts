@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import type { AddressInfo } from 'node:net';
 import type { AppConfig } from './config.ts';
 import type { AnyDriver, Source, SourceContext } from './core/driver.ts';
@@ -8,6 +9,7 @@ import { BUILTIN_DRIVERS } from './drivers/index.ts';
 import { createLogger, errorMessage, LogBuffer, recordingLogger, type Logger } from './lib/log.ts';
 import { ConfigError, OptionReader } from './lib/options.ts';
 import { createHttpServer } from './transports/http-server.ts';
+import { isLoopbackHost } from './transports/security.ts';
 
 export interface StartOptions {
   config: AppConfig;
@@ -74,10 +76,27 @@ export async function startServer(options: StartOptions): Promise<RunningServer>
     positions.start();
   }
 
+  let tls: { cert: Buffer; key: Buffer } | undefined;
+  if (config.tls) {
+    try {
+      tls = { cert: fs.readFileSync(config.tls.certFile), key: fs.readFileSync(config.tls.keyFile) };
+    } catch (err) {
+      throw new ConfigError(`cannot read the TLS certificate / key: ${errorMessage(err)}`);
+    }
+  }
+  if (!isLoopbackHost(config.host) && !config.token) {
+    log.warn(
+      `listening on ${config.host} without a token: every device that can reach this port can read the live position. ` +
+        'Set "token" (and use TLS when reachable from the internet).',
+    );
+  }
+
   const { server, closeClients } = createHttpServer({
     hub,
     host: config.host,
     allowedOrigins: config.allowedOrigins,
+    allowedHosts: config.allowedHosts,
+    ...(tls && { tls }),
     ...(config.token && { token: config.token }),
     motionMaxHz: config.motionMaxHz,
     log: log.child('http'),
@@ -134,5 +153,5 @@ export async function startServer(options: StartOptions): Promise<RunningServer>
       server.closeAllConnections();
     })());
 
-  return { url: `http://${hostForUrl}:${port}`, port, hub, close };
+  return { url: `${tls ? 'https' : 'http'}://${hostForUrl}:${port}`, port, hub, close };
 }

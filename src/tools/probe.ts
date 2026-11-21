@@ -121,29 +121,22 @@ async function probePort(host: string, port: number, o: Required<Omit<ProbeOptio
   const passive = await exchange(host, port, { ms: o.listenMs, timeoutMs: o.connectTimeoutMs });
   if (passive && passive.length > 0) return { port, kind: 'stream', ...describeStream(passive) };
 
-  // 2) RTSP?
-  if (port === 554 || port === 8554) {
-    const reply = await exchange(host, port, {
-      request: `OPTIONS rtsp://${host}:${port}/ RTSP/1.0\r\nCSeq: 1\r\nUser-Agent: overlays-server-probe\r\n\r\n`,
-      ms: 1500,
-      timeoutMs: o.connectTimeoutMs,
-    });
+  // 2) RTSP or HTTP? The usual RTSP ports are asked RTSP first, every other port HTTP first.
+  const ask = async (kind: 'rtsp' | 'http'): Promise<PortReport | undefined> => {
+    const request =
+      kind === 'rtsp'
+        ? `OPTIONS rtsp://${host}:${port}/ RTSP/1.0\r\nCSeq: 1\r\nUser-Agent: overlays-server-probe\r\n\r\n`
+        : `GET / HTTP/1.0\r\nHost: ${host}\r\nUser-Agent: overlays-server-probe\r\n\r\n`;
+    const reply = await exchange(host, port, { request, ms: 1500, timeoutMs: o.connectTimeoutMs, maxBytes: 4096 });
     const head = reply?.toString('latin1') ?? '';
-    if (head.startsWith('RTSP/')) {
-      return { port, kind: 'rtsp', status: head.split('\r\n')[0], ...(headerValue(head, 'Server') && { server: headerValue(head, 'Server') }) };
-    }
-  }
-
-  // 3) HTTP?
-  const reply = await exchange(host, port, {
-    request: `GET / HTTP/1.0\r\nHost: ${host}\r\nUser-Agent: overlays-server-probe\r\n\r\n`,
-    ms: 1500,
-    timeoutMs: o.connectTimeoutMs,
-    maxBytes: 4096,
-  });
-  const head = reply?.toString('latin1') ?? '';
-  if (head.startsWith('HTTP/')) {
-    return { port, kind: 'http', status: head.split('\r\n')[0], ...(headerValue(head, 'Server') && { server: headerValue(head, 'Server') }) };
+    if (!head.startsWith(kind === 'rtsp' ? 'RTSP/' : 'HTTP/')) return undefined;
+    const server = headerValue(head, 'Server');
+    return { port, kind, status: head.split('\r\n')[0], ...(server && { server }) };
+  };
+  const order: ('rtsp' | 'http')[] = port === 554 || port === 8554 ? ['rtsp', 'http'] : ['http', 'rtsp'];
+  for (const kind of order) {
+    const found = await ask(kind);
+    if (found) return found;
   }
   return { port, kind: 'silent', note: 'open, but sent nothing and did not answer HTTP/RTSP' };
 }

@@ -1,4 +1,5 @@
 import http, { type IncomingMessage, type ServerResponse } from 'node:http';
+import https from 'node:https';
 import type { Duplex } from 'node:stream';
 import { WebSocketServer, type WebSocket } from 'ws';
 import type { Hub } from '../core/hub.ts';
@@ -15,6 +16,10 @@ export interface HttpServerOptions {
   hub: Hub;
   host: string;
   allowedOrigins: readonly string[];
+  /** Extra Host names (reverse proxy) accepted while listening on loopback. */
+  allowedHosts?: readonly string[];
+  /** PEM certificate and key: serve HTTPS / WSS instead of HTTP / WS. */
+  tls?: { cert: Buffer; key: Buffer };
   token?: string;
   motionMaxHz: number;
   log: Logger;
@@ -35,20 +40,21 @@ const SLOW_CLIENT_BYTES = 256 * 1024;
  *   WS  /v1/ws       WebSocket (main channel)
  * Query on stream/ws: `source=<id|auto>`, `motion=1`, `token=<token>` when one is configured.
  */
-export function createHttpServer(options: HttpServerOptions): { server: http.Server; closeClients: () => void } {
+export function createHttpServer(options: HttpServerOptions): { server: http.Server | https.Server; closeClients: () => void } {
   const { hub, log } = options;
   const wss = new WebSocketServer({ noServer: true, maxPayload: 4096, perMessageDeflate: false });
   const sseClients = new Set<ServerResponse>();
 
+  /** CORS only for allowed origins: a refused site must not even learn that the server exists. */
   const corsHeaders = (req: IncomingMessage): Record<string, string> => {
     const origin = req.headers.origin;
-    if (!origin) return {};
+    if (!origin || !originAllowed(origin, options.allowedOrigins)) return {};
     return { 'Access-Control-Allow-Origin': origin, Vary: 'Origin' };
   };
 
   /** Shared gate for HTTP and WebSocket. Returns an HTTP status + reason when refused. */
   const gate = (req: IncomingMessage, url: URL, needsToken: boolean): [number, string] | undefined => {
-    if (!hostHeaderAllowed(req.headers.host, options.host)) return [421, 'unexpected Host header'];
+    if (!hostHeaderAllowed(req.headers.host, options.host, options.allowedHosts)) return [421, 'unexpected Host header'];
     if (!originAllowed(req.headers.origin, options.allowedOrigins)) {
       return [403, `origin ${req.headers.origin} is not in allowedOrigins`];
     }
@@ -99,7 +105,7 @@ export function createHttpServer(options: HttpServerOptions): { server: http.Ser
     log.info(`overlay connected via SSE (${req.headers.origin ?? 'no origin'}, source=${feedOptions.subscription})`);
   };
 
-  const server = http.createServer((req, res) => {
+  const handler: http.RequestListener = (req, res) => {
     const url = new URL(req.url ?? '/', 'http://localhost');
     const isPage = url.pathname === '/' || url.pathname === '/health';
     const refused = gate(req, url, !isPage);
@@ -160,7 +166,9 @@ export function createHttpServer(options: HttpServerOptions): { server: http.Ser
       default:
         return sendJson(req, res, 404, { error: 'not found' });
     }
-  });
+  };
+
+  const server = options.tls ? https.createServer({ cert: options.tls.cert, key: options.tls.key }, handler) : http.createServer(handler);
 
   server.on('upgrade', (req: IncomingMessage, socket: Duplex, head: Buffer) => {
     const url = new URL(req.url ?? '/', 'http://localhost');
