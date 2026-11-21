@@ -100,8 +100,10 @@ camera reproduces the N5 Pro's checksum quirk, for example).
 ## Releasing (maintainers)
 
 1. Move *Unreleased* in `CHANGELOG.md` to the new version; bump `version` in `package.json` **and** `src/version.ts`.
-2. `pnpm check && pnpm build`, commit `chore(release): vX.Y.Z`, tag `vX.Y.Z`, push with tags.
-3. `npm publish` (runs `prepublishOnly`), then create the GitHub release from the changelog entry.
+2. `pnpm check && pnpm build`, commit `chore(release): vX.Y.Z`, tag `vX.Y.Z`, push with tags. The *Release*
+   workflow checks that the tag matches both version strings and creates the GitHub release.
+3. Publish to npm by hand: `npm publish` (`prepublishOnly` runs the checks and the build first). No npm token is
+   stored in the repository or in CI.
 
 ## Code of conduct
 
