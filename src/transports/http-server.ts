@@ -3,7 +3,9 @@ import type { Duplex } from 'node:stream';
 import { WebSocketServer, type WebSocket } from 'ws';
 import type { Hub } from '../core/hub.ts';
 import { PROTOCOL_VERSION, SERVER_NAME, type ServerMessage } from '../core/protocol.ts';
-import type { Logger } from '../lib/log.ts';
+import type { AppConfig } from '../config.ts';
+import type { LogBuffer, Logger } from '../lib/log.ts';
+import { buildDiagnostics, diagnosticsFileName } from './diagnostics.ts';
 import { VERSION } from '../version.ts';
 import { feedOptionsFromUrl, openFeed } from './feed.ts';
 import { hostHeaderAllowed, originAllowed, tokenAllowed } from './security.ts';
@@ -16,6 +18,8 @@ export interface HttpServerOptions {
   token?: string;
   motionMaxHz: number;
   log: Logger;
+  /** Enables `/v1/diagnostics`. */
+  diagnostics?: { config: AppConfig; logBuffer: LogBuffer; startedAt: number };
 }
 
 const HEARTBEAT_MS = 15_000;
@@ -127,11 +131,32 @@ export function createHttpServer(options: HttpServerOptions): { server: http.Ser
         });
         return res.end(statusPageHtml());
       case '/health':
-        return sendJson(req, res, 200, { ok: true, server: SERVER_NAME, version: VERSION });
+        // Cheap "is the server up?" check for overlays and scripts (no location data).
+        return sendJson(req, res, 200, {
+          ok: true,
+          server: SERVER_NAME,
+          version: VERSION,
+          protocol: PROTOCOL_VERSION,
+          sources: hub.snapshots().map((s) => ({ id: s.id, driver: s.driver, link: s.status.link, gps: s.status.gps })),
+        });
       case '/v1/state':
         return sendJson(req, res, 200, state());
       case '/v1/stream':
         return serveSse(req, res, url);
+      case '/v1/diagnostics': {
+        if (!options.diagnostics) return sendJson(req, res, 404, { error: 'not found' });
+        const keepPositions = ['1', 'true', 'yes'].includes(url.searchParams.get('positions') ?? '');
+        const body = buildDiagnostics({ hub, ...options.diagnostics, keepPositions });
+        log.info(`diagnostics downloaded (positions ${keepPositions ? 'included' : 'masked'})`);
+        res.writeHead(200, {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Content-Disposition': `attachment; filename="${diagnosticsFileName()}"`,
+          'Cache-Control': 'no-store',
+          'X-Content-Type-Options': 'nosniff',
+          ...corsHeaders(req),
+        });
+        return res.end(JSON.stringify(body, null, 2));
+      }
       default:
         return sendJson(req, res, 404, { error: 'not found' });
     }

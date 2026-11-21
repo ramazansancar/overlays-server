@@ -7,6 +7,7 @@
  *   pnpm dev -- --speed 90            # drive faster (km/h)
  *   pnpm dev -- --drop-every 20       # drop the camera connection every 20 s (reconnect testing)
  *   pnpm dev -- --port 3457 --log-level debug
+ *   pnpm dev -- --replay diagnostics.json  # replay a streamer's diagnostics file (loops)
  *
  * Two terminals instead (fake camera output visible on its own):
  *   pnpm dev:fake-camera              # terminal 1: fake camera on 127.0.0.1:6100 (+ API :8080)
@@ -16,6 +17,7 @@
  */
 import { parseArgs } from 'node:util';
 import { startFakeDdpai } from './lib/fake-ddpai.ts';
+import { loadReplayFrames } from './lib/replay.ts';
 import { startServer } from '../src/app.ts';
 import { parseConfig } from '../src/config.ts';
 import { createLogger } from '../src/lib/log.ts';
@@ -35,15 +37,19 @@ const { values } = parseArgs({
     lon: { type: 'string' },
     'drop-every': { type: 'string' },
     external: { type: 'boolean', default: false },
+    replay: { type: 'string' },
+    'replay-source': { type: 'string' },
     'camera-host': { type: 'string', default: '127.0.0.1' },
     'camera-port': { type: 'string', default: '6100' },
     'camera-http-port': { type: 'string', default: '8080' },
   },
 });
 
+const replay = values.replay ? loadReplayFrames(values.replay, values['replay-source']) : undefined;
 const fake = values.external
   ? undefined
   : await startFakeDdpai({
+      ...(replay && { replay: replay.frames }),
       noFix: values['no-fix'],
       speedKmh: Number(values.speed),
       ...(values.lat && { lat: Number(values.lat) }),

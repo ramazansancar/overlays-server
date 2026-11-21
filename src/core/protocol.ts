@@ -24,6 +24,8 @@ export interface StatusMessage {
   type: 'status';
   source: string;
   driver: string;
+  /** Human readable driver name, e.g. "DDPAI dashcam". */
+  driverName: string;
   link: LinkState;
   gps: GpsState;
   active: boolean;
@@ -56,6 +58,7 @@ export function statusMessage(s: SourceSnapshot): StatusMessage {
     type: 'status',
     source: s.id,
     driver: s.driver,
+    driverName: s.driverName,
     link: s.status.link,
     gps: s.status.gps,
     active: s.active,

@@ -28,6 +28,11 @@ export interface FakeDdpaiOptions {
   eventIntervalMs?: number;
   /** Called for connections, API requests and a periodic summary (the CLI prints these). */
   onLog?: (message: string) => void;
+  /**
+   * Replay recorded frames (from a diagnostics file) instead of the synthetic drive, with their original timing,
+   * in a loop. The frames are sent exactly as recorded.
+   */
+  replay?: { t: number; frame: string }[];
 }
 
 export interface FakeDdpai {
@@ -87,7 +92,24 @@ export async function startFakeDdpai(options: FakeDdpaiOptions = {}): Promise<Fa
     for (const s of sockets) s.write(`${frame}\0`);
   };
 
+  const replay = options.replay && options.replay.length > 0 ? options.replay : undefined;
+  let replayTimer: NodeJS.Timeout | undefined;
+  if (replay) {
+    let i = 0;
+    const step = () => {
+      const current = replay[i]!;
+      broadcast(current.frame);
+      i = (i + 1) % replay.length;
+      const next = replay[i]!;
+      // Original gap (capped so a long pause in the recording doesn't stall the replay); short pause between loops.
+      const gap = i === 0 ? 1000 : Math.min(Math.max(next.t - current.t, 0), 5000);
+      replayTimer = setTimeout(step, gap);
+    };
+    replayTimer = setTimeout(step, 200);
+  }
+
   const gpsTimer = setInterval(() => {
+    if (replay) return;
     const radius = 250;
     const ms = speedKmh / 3.6;
     angle += (ms * (options.gpsIntervalMs ?? 1000)) / 1000 / radius;
@@ -99,7 +121,9 @@ export async function startFakeDdpai(options: FakeDdpaiOptions = {}): Promise<Fa
     };
     broadcast(gpsFrame(new Date(), noFix ? undefined : fix));
   }, options.gpsIntervalMs ?? 1000);
-  const gsensorTimer = setInterval(() => broadcast(gsensorFrame(Date.now())), options.gsensorIntervalMs ?? 62);
+  const gsensorTimer = setInterval(() => {
+    if (!replay) broadcast(gsensorFrame(Date.now()));
+  }, options.gsensorIntervalMs ?? 62);
   let eventCount = 0;
   const eventTimer =
     (options.eventIntervalMs ?? 0) > 0
@@ -187,6 +211,7 @@ export async function startFakeDdpai(options: FakeDdpaiOptions = {}): Promise<Fa
       clearInterval(gpsTimer);
       clearInterval(gsensorTimer);
       clearInterval(eventTimer);
+      clearTimeout(replayTimer);
       for (const s of sockets) s.destroy();
       api.closeAllConnections();
       await Promise.all([

@@ -99,7 +99,22 @@ Canlı siteyle (`https://overlays.ramazansancar.com.tr`) denemek, overlay taraf�
 sonra mümkün. OBS 33 beta kullandıysan ve bağlantı reddediliyorsa: OBS'i kapat,
 `%APPDATA%\obs-studio\plugin_config\obs-browser` klasörünü sil.
 
-## 4. npm paketini yayınlamadan denemek
+## 4. Bir yayıncının sorununu tekrar oynatmak
+
+Yayıncı durum sayfasından **Tanı verisini indir** ile aldığı dosyayı gönderir. Sahte kamera o dosyadaki ham mesajları
+orijinal zamanlamasıyla döngüde yeniden yayınlar:
+
+```bash
+pnpm dev -- --replay tani.json                    # tek terminal: tekrar oynatan sahte kamera + sunucu
+# ya da iki terminal:
+pnpm dev:fake-camera -- --replay tani.json        # 1. terminal
+pnpm dev:server                                   # 2. terminal
+```
+
+Birden fazla kaynak varsa: `--replay-source <id>`. Dosya konumsuz alındıysa GPS mesajlarında koordinat yoktur
+(sunucu "uydu aranıyor" görür); konum sorunları için yayıncıdan **Konumu dahil et** ile indirmesini iste.
+
+## 5. npm paketini yayınlamadan denemek
 
 ```bash
 cd overlays-server
@@ -112,7 +127,7 @@ npm install ../overlays-server/overlays-server-0.1.0.tgz
 npx overlays-server --simulate             # http://127.0.0.1:3456
 ```
 
-## 5. Gerçek kamerayla
+## 6. Gerçek kamerayla
 
 Bilgisayar kameranın Wi-Fi'ına bağlıyken:
 

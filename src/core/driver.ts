@@ -22,6 +22,11 @@ export interface SourceContext {
   publishMotion(sample: MotionSample): void;
   /** Any other device message, passed to clients that asked for events. */
   publishEvent(event: DeviceEvent): void;
+  /**
+   * Keeps a raw device message (text, as received) in a small ring buffer for the diagnostics download, so a
+   * problem can be replayed with the fake device. Cheap; call it for every message.
+   */
+  recordRaw(frame: string): void;
 }
 
 /** A running instance of a driver. */

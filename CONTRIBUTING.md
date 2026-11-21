@@ -9,7 +9,8 @@ The most valuable contributions right now:
    [device report](https://github.com/ramazansancar/overlays-server/issues/new?template=device-report.yml) form.
    Step by step: [docs/new-device.md](docs/new-device.md). Tested devices: [docs/devices/README.md](docs/devices/README.md).
 2. **New drivers** for devices that expose live GPS on the network (see [docs/drivers.md](docs/drivers.md)).
-3. Bug reports with logs (`--log-level debug`). **Remove coordinates and Wi-Fi names/passwords first.**
+3. Bug reports with the **diagnostics file** (status page → *Download diagnostics*) or logs (`--log-level debug`).
+   Reproduce a report locally: `pnpm dev -- --replay <diagnostics.json>` ([docs/testing-locally.md](docs/testing-locally.md)).
 
 ## Development setup
 

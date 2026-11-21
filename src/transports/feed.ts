@@ -11,7 +11,7 @@ import {
 import { VERSION } from '../version.ts';
 
 export interface FeedOptions {
-  /** `auto` = whichever source is active, otherwise one source id. */
+  /** `auto` = whichever source is active, `*` = every source (status page), otherwise one source id. */
   subscription: string;
   motion: boolean;
   motionMaxHz: number;
@@ -27,7 +27,7 @@ const flag = (url: URL, name: string) => ['1', 'true', 'yes'].includes(url.searc
  */
 export function feedOptionsFromUrl(url: URL, hub: Hub, motionMaxHz: number): FeedOptions | string {
   const subscription = url.searchParams.get('source') || 'auto';
-  if (subscription !== 'auto' && !hub.has(subscription)) return `unknown source "${subscription}"`;
+  if (subscription !== 'auto' && subscription !== '*' && !hub.has(subscription)) return `unknown source "${subscription}"`;
   const all = flag(url, 'all');
   const motion = all || flag(url, 'motion');
   return { subscription, motion: motion && motionMaxHz > 0, motionMaxHz, events: all || flag(url, 'events') };
@@ -46,9 +46,10 @@ export function openFeed(
   canSendOptional: () => boolean = () => true,
 ): () => void {
   const isAuto = options.subscription === 'auto';
-  const follows = (source: string, active: boolean) => (isAuto ? active : source === options.subscription);
+  const isAll = options.subscription === '*';
+  const follows = (source: string, active: boolean) => isAll || (isAuto ? active : source === options.subscription);
   const minMotionGapMs = options.motionMaxHz > 0 ? 1000 / options.motionMaxHz : Infinity;
-  let lastMotionAt = 0;
+  const lastMotionAt = new Map<string, number>();
 
   send({
     type: 'hello',
@@ -58,9 +59,15 @@ export function openFeed(
     subscription: options.subscription,
     ...(hub.activeGpsSource && { activeSource: hub.activeGpsSource }),
   });
-  for (const snapshot of hub.snapshots()) send(statusMessage(snapshot));
-  const current = hub.snapshots().find((s) => follows(s.id, s.active));
-  if (current?.lastFix && current.status.gps === 'fix') send(fixMessage(current.id, current.lastFix));
+  const snapshots = hub.snapshots();
+  for (const snapshot of snapshots) send(statusMessage(snapshot));
+  if (isAll) {
+    // Every source's last known position (even stale: the status says how old it is).
+    for (const s of snapshots) if (s.lastFix) send(fixMessage(s.id, s.lastFix));
+  } else {
+    const current = snapshots.find((s) => follows(s.id, s.active));
+    if (current?.lastFix && current.status.gps === 'fix') send(fixMessage(current.id, current.lastFix));
+  }
 
   return hub.subscribe((event) => {
     switch (event.kind) {
@@ -75,14 +82,14 @@ export function openFeed(
         const active = hub.activeGpsSource === event.source;
         if (!follows(event.source, active)) break;
         const now = Date.now();
-        if (now - lastMotionAt < minMotionGapMs || !canSendOptional()) break;
-        lastMotionAt = now;
+        if (now - (lastMotionAt.get(event.source) ?? 0) < minMotionGapMs || !canSendOptional()) break;
+        lastMotionAt.set(event.source, now);
         send(motionMessage(event.source, event.sample));
         break;
       }
       case 'event': {
         if (!options.events) break;
-        if (!follows(event.source, hub.activeGpsSource === event.source) && options.subscription !== 'auto') break;
+        if (!isAuto && !follows(event.source, hub.activeGpsSource === event.source)) break;
         send(eventMessage(event.source, event.event));
         break;
       }

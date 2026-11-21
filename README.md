@@ -159,16 +159,26 @@ Ortam değişkenleri: `OVERLAYS_SERVER_PORT`, `OVERLAYS_SERVER_HOST`, `OVERLAYS_
 | Yol | Açıklama |
 | --- | --- |
 | `GET /` | Durum sayfası |
-| `GET /health` | Canlılık kontrolü |
+| `GET /health` | Sunucu açık mı? (sürüm, kaynakların bağlantı durumu; konum yok, token istemez) |
 | `GET /v1/state` | Tüm kaynakların durumu ve son konumu (JSON) |
 | `WS /v1/ws` | Canlı akış (ana kanal) |
 | `GET /v1/stream` | Canlı akış, Server-Sent Events (yedek) |
+| `GET /v1/diagnostics` | Tanı dosyası (son ham cihaz verisi, loglar, ayarlar); durum sayfasındaki butonla indirilir |
 
 Akış parametreleri: `source=<id|auto>`, `motion=1` (ivme), `events=1` (ham cihaz mesajları), `all=1`, `token=...`.
 Mesaj biçimi: [docs/protocol.md](docs/protocol.md). **Hangi veriler var?** (konum, hız, yön, rakım, uydu, HDOP, ivme,
 hafıza kartı, kamera sayısı, RTSP adresleri, cihaz bilgileri, ham olaylar): [docs/data.md](docs/data.md).
 
 ## Sorun giderme
+
+**Önce durum sayfasına bak:** <http://127.0.0.1:3456>. Kaynakların bağlantı ve GPS durumu canlı görünür; konumu
+gösterip Google Maps / Yandex / OpenStreetMap'te açabilirsin.
+
+**Hata bildirirken tanı dosyasını ekle:** durum sayfasının altındaki **Tanı verisini indir** butonu tek bir `.json`
+dosyası verir: cihazdan gelen son ~2 dakikalık ham veri, son log satırları, ayarlar ve durum. Bu dosyayla sorunu
+kendi bilgisayarımızda aynen tekrar oynatıp düzeltebiliyoruz. Wi-Fi şifresi, seri numarası ve MAC adresleri her zaman
+gizlenir; konum yalnızca **Konumu dahil et** işaretliyse eklenir (harita/konum sorunlarında gerekli). Komut satırından:
+`curl.exe -o tani.json http://127.0.0.1:3456/v1/diagnostics`.
 
 **Durum sayfasında `connecting` / "is this PC connected to the camera Wi-Fi?"** — Bilgisayar kameranın Wi-Fi'ına
 bağlı değil ya da Windows `193.168.0.1`'i yanlış arayüze yolluyor. [docs/windows-network.md](docs/windows-network.md).

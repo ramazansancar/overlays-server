@@ -13,6 +13,10 @@ body:
 
         Not sure if it's a bug? Check [Troubleshooting / Sorun giderme](https://github.com/ramazansancar/overlays-server#sorun-giderme) first.
 
+        **Please attach a diagnostics file / Lütfen tanı dosyasını ekle:** open http://127.0.0.1:3456 → **Download diagnostics /
+        Tanı verisini indir**, then drag the `.json` file into the box below. It holds the last ~2 minutes of raw device data
+        and logs, so we can replay the problem. Secrets are removed; your position only if you tick the box.
+
   - type: textarea
     id: what
     attributes:
@@ -89,6 +93,18 @@ body:
         ```text
 
         ```
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics file / Tanı dosyası
+      description: Drag & drop the .json here (if GitHub refuses the extension, rename it to .txt). / .json dosyasını buraya sürükle (uzantı kabul edilmezse .txt yap).
+      value: |
+        <!--
+        http://127.0.0.1:3456 → "Tanı verisini indir" / "Download diagnostics"
+        or / ya da:  curl.exe -o diagnostics.json http://127.0.0.1:3456/v1/diagnostics
+        Tick "include my position" only for map / position problems. / Konumu sadece harita/konum sorunlarında dahil et.
+        -->
 
   - type: textarea
     id: logs

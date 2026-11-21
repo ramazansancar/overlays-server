@@ -4,7 +4,7 @@ import type { AnyDriver, Source, SourceContext } from './core/driver.ts';
 import { Hub } from './core/hub.ts';
 import { DriverRegistry } from './core/registry.ts';
 import { BUILTIN_DRIVERS } from './drivers/index.ts';
-import { createLogger, errorMessage, type Logger } from './lib/log.ts';
+import { createLogger, errorMessage, LogBuffer, recordingLogger, type Logger } from './lib/log.ts';
 import { ConfigError, OptionReader } from './lib/options.ts';
 import { createHttpServer } from './transports/http-server.ts';
 
@@ -32,7 +32,8 @@ interface Running {
 /** Builds every enabled source, starts the HTTP/WebSocket server, then starts the sources. */
 export async function startServer(options: StartOptions): Promise<RunningServer> {
   const { config } = options;
-  const log = options.log ?? createLogger(config.logLevel);
+  const logBuffer = new LogBuffer(500);
+  const log = recordingLogger(options.log ?? createLogger(config.logLevel), logBuffer);
   const registry = new DriverRegistry(options.drivers ?? BUILTIN_DRIVERS);
   const hub = new Hub({ staleAfterMs: config.staleAfterMs, gpsPriority: config.gpsPriority, log });
 
@@ -63,6 +64,7 @@ export async function startServer(options: StartOptions): Promise<RunningServer>
     ...(config.token && { token: config.token }),
     motionMaxHz: config.motionMaxHz,
     log: log.child('http'),
+    diagnostics: { config, logBuffer, startedAt: Date.now() },
   });
 
   await new Promise<void>((resolve, reject) => {

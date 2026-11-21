@@ -64,6 +64,7 @@ export const ddpaiDriver = defineDriver<DdpaiOptions>({
     };
 
     const handleFrame = (frame: string) => {
+      ctx.recordRaw(frame);
       const msg = decodeDdpaiFrame(frame);
       if (!msg) {
         ctx.log.debug(`unparsed frame: ${frame.slice(0, 120)}`);

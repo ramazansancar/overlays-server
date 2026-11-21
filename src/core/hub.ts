@@ -27,7 +27,16 @@ export type HubEvent =
 
 export type HubListener = (event: HubEvent) => void;
 
+/** A raw device message kept for diagnostics. */
+export interface RawFrame {
+  /** Epoch ms when it arrived. */
+  t: number;
+  frame: string;
+}
+
 export interface HubOptions {
+  /** Raw frames kept per source for diagnostics (default 2000, ~2 min of DDPAI data). */
+  rawFrameCapacity?: number;
   /** A source that sent fixes and then went quiet for this long is `stale`. */
   staleAfterMs?: number;
   /** Source ids in preference order for the `auto` GPS stream; others follow in registration order. */
@@ -45,6 +54,7 @@ interface Entry {
   lastFix?: GpsFix;
   lastFixAt?: number;
   lastMotion?: MotionSample;
+  raw: RawFrame[];
   abort: AbortController;
 }
 
@@ -56,6 +66,7 @@ export class Hub {
   private readonly entries = new Map<string, Entry>();
   private readonly listeners = new Set<HubListener>();
   private readonly staleAfterMs: number;
+  private readonly rawFrameCapacity: number;
   private readonly gpsPriority: string[];
   private readonly log: Logger;
   private readonly now: () => number;
@@ -64,6 +75,7 @@ export class Hub {
 
   constructor(options: HubOptions = {}) {
     this.staleAfterMs = options.staleAfterMs ?? 5000;
+    this.rawFrameCapacity = options.rawFrameCapacity ?? 2000;
     this.gpsPriority = options.gpsPriority ?? [];
     this.log = options.log ?? silentLogger;
     this.now = options.now ?? Date.now;
@@ -75,6 +87,7 @@ export class Hub {
     const entry: Entry = {
       info,
       status: { link: 'starting', gps: 'unknown', since: this.now() },
+      raw: [],
       abort: new AbortController(),
     };
     this.entries.set(info.id, entry);
@@ -89,6 +102,11 @@ export class Hub {
       publishNoFix: (detail) => this.publishNoFix(id, detail),
       publishMotion: (sample) => this.publishMotion(id, sample),
       publishEvent: (event) => this.publishEvent(id, event),
+      recordRaw: (frame) => {
+        if (this.rawFrameCapacity <= 0) return;
+        entry.raw.push({ t: this.now(), frame });
+        if (entry.raw.length > this.rawFrameCapacity) entry.raw.splice(0, entry.raw.length - this.rawFrameCapacity);
+      },
     };
   }
 
@@ -132,6 +150,11 @@ export class Hub {
 
   snapshots(): SourceSnapshot[] {
     return [...this.entries.values()].map((e) => this.toSnapshot(e));
+  }
+
+  /** Recent raw device messages of a source, oldest first (for diagnostics). */
+  recentFrames(id: string): RawFrame[] {
+    return [...(this.entries.get(id)?.raw ?? [])];
   }
 
   // --- writes from sources ----------------------------------------------------------------

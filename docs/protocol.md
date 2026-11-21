@@ -12,7 +12,7 @@ Query parameters (WebSocket and SSE):
 
 | Parameter | Default | Meaning |
 | --- | --- | --- |
-| `source` | `auto` | `auto` follows the active GPS source (priority + failover); or a source id to pin one |
+| `source` | `auto` | `auto` follows the active GPS source (priority + failover); a source id pins one; `*` = every source (the status page uses this) |
 | `motion` | off | `1` to also receive `motion` messages (throttled to `motionMaxHz`) |
 | `events` | off | `1` to also receive raw device `event` messages |
 | `all` | off | `1` = `motion=1&events=1` |
@@ -39,7 +39,7 @@ First message on every connection.
 Sent for every source right after `hello`, then whenever a source's state changes.
 
 ```json
-{ "type": "status", "source": "ddpai", "driver": "ddpai", "link": "online", "gps": "fix", "active": true,
+{ "type": "status", "source": "ddpai", "driver": "ddpai", "driverName": "DDPAI dashcam", "link": "online", "gps": "fix", "active": true,
   "satellites": 24, "device": { "vendor": "DDPAI", "model": "DN2509_Overseas", "firmware": "v8.0.0.10" },
   "since": 1795256586151 }
 ```
@@ -97,6 +97,24 @@ Acceleration in g, device axes (orientation depends on how the camera is mounted
 Any device message the driver does not interpret, passed through untouched (`name` = device message type). Lets
 overlays use new data before the server knows it. The shape of `data` is device specific and not covered by the
 compatibility promise.
+
+### `/health`
+
+Cheap "is the server up?" check, no token needed, no position data:
+
+```json
+{ "ok": true, "server": "overlays-server", "version": "0.1.0", "protocol": 1,
+  "sources": [{ "id": "ddpai", "driver": "ddpai", "link": "online", "gps": "fix" }] }
+```
+
+Overlays use it to tell "server not running" apart from "server running but refused the WebSocket" (origin / token).
+
+### `/v1/diagnostics`
+
+A JSON file for bug reports (`Content-Disposition: attachment`): recent raw device frames (`sources[].recentFrames`,
+`{ t, frame }`, ~2000 per source), the last 500 log lines, source snapshots, the effective config (token masked) and
+the runtime. Wi-Fi credentials, serials and MACs are always masked; positions unless `?positions=1`. Needs the token
+when one is configured. Replay it: `pnpm dev:fake-camera -- --replay <file>`.
 
 ### `/v1/state`
 
