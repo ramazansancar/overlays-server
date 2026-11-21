@@ -1,0 +1,21 @@
+# Changelog
+
+All notable changes are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
+and the project uses [Semantic Versioning](https://semver.org/).
+
+## [Unreleased]
+
+### Added
+
+- Local bridge server: WebSocket (`/v1/ws`), Server-Sent Events (`/v1/stream`), JSON state (`/v1/state`),
+  health check and a status page.
+- Modular driver system (`defineDriver`), multiple sources, GPS source priority with automatic failover,
+  stale detection.
+- `ddpai` driver: live GPS (1 Hz) and G-sensor from DDPAI dashcams over TCP 6100, model/firmware from the HTTP API.
+  Handles the N5 Pro's NMEA checksum quirk (checksum computed for `GN`, sent as `GP`).
+- `simulator` driver for development without hardware.
+- Security: loopback-only by default, origin allowlist, Host header check (DNS rebinding), optional token.
+- Config file with defaults, environment variables and CLI flags; `--simulate`, `--print-config`, `--list-drivers`.
+- Run from a git clone (`npm start`, `start.cmd`, no build step) or from npm (`npx overlays-server`).
+- Programmatic API (`import { startServer, defineDriver } from 'overlays-server'`).
+- Fake DDPAI camera for development and tests (`pnpm fake-ddpai`).
